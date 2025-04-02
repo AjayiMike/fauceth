@@ -1,6 +1,7 @@
 import Faucet from "@/components/Faucet";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import { Toaster } from "sonner";
 
 export default function Home() {
     return (
@@ -9,6 +10,7 @@ export default function Home() {
             <main className="flex-1">
                 <Faucet />
             </main>
+            <Toaster />
             <Footer />
         </div>
     );

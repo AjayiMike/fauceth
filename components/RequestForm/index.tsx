@@ -2,11 +2,113 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Info } from "lucide-react";
+import { ArrowRight, Info, AlertTriangle, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { formatEther, isAddress } from "viem";
+import { formatDuration } from "@/lib/utils";
+import { useState } from "react";
+import { getPublicClient } from "@/config/networks";
+import { toast } from "sonner";
 
-const RequestForm = () => {
+const RequestForm = ({
+    balance,
+    faucetAmount,
+    cooldownPeriod,
+}: {
+    balance?: bigint;
+    faucetAmount?: bigint;
+    cooldownPeriod?: bigint;
+}) => {
+    const [address, setAddress] = useState("");
+    const [addressError, setAddressError] = useState<string | null>(null);
+    const formattedBalance = balance ? formatEther(balance) : "0";
+    const isZeroBalance = formattedBalance === "0";
+    const isLowBalance = !isZeroBalance && Number(formattedBalance) < 1;
+
+    const renderAlert = () => {
+        if (isZeroBalance) {
+            return (
+                <Alert className="bg-destructive/10 text-destructive">
+                    <AlertCircle className="h-5 w-5 mt-0.5" />
+                    <AlertTitle className="font-medium mb-1">
+                        Faucet Empty
+                    </AlertTitle>
+                    <AlertDescription className="text-destructive/80">
+                        The faucet is currently empty. Please try again later or
+                        consider donating to help keep the faucet running.
+                    </AlertDescription>
+                </Alert>
+            );
+        }
+
+        if (isLowBalance) {
+            return (
+                <Alert className="bg-yellow-500/10 text-yellow-600">
+                    <AlertTriangle className="h-5 w-5 mt-0.5" />
+                    <AlertTitle className="font-medium mb-1">
+                        Low Balance Warning
+                    </AlertTitle>
+                    <AlertDescription className="text-yellow-600/80">
+                        The faucet balance is running low ({formattedBalance}{" "}
+                        ETH). You can still request{" "}
+                        {formatEther(faucetAmount || BigInt(0))} ETH every{" "}
+                        {formatDuration(cooldownPeriod || BigInt(0))}, but
+                        please consider donating to help maintain the faucet.
+                    </AlertDescription>
+                </Alert>
+            );
+        }
+
+        return (
+            <Alert className="bg-blue-500/10 text-blue-600">
+                <Info className="h-5 w-5 mt-0.5" />
+                <AlertTitle className="font-medium mb-1">
+                    Request Information
+                </AlertTitle>
+                <AlertDescription className="text-blue-600/80">
+                    You can request {formatEther(faucetAmount || BigInt(0))} ETH
+                    every {formatDuration(cooldownPeriod || BigInt(0))}. Make
+                    sure to provide a valid Ethereum address.
+                </AlertDescription>
+            </Alert>
+        );
+    };
+
+    const handleAddressChange = (value: string) => {
+        setAddress(value);
+        setAddressError(null);
+
+        if (!value) {
+            setAddressError("Address is required");
+        }
+
+        if (!isAddress(value)) {
+            setAddressError("Invalid Ethereum address");
+        }
+    };
+
+    const isValid = !addressError && isAddress(address);
+
+    const handleRequest = async () => {
+        try {
+            const response = await fetch("/api/request", {
+                method: "POST",
+                body: JSON.stringify({ address }),
+            });
+            const data = await response.json();
+            const tx = await getPublicClient().waitForTransactionReceipt({
+                hash: data.txHash,
+            });
+            if (tx.status !== "success") {
+                throw new Error("Transaction failed");
+            }
+            toast.success("Tokens requested successfully");
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -14,30 +116,35 @@ const RequestForm = () => {
             transition={{ duration: 0.2 }}
             className="space-y-6"
         >
-            <Alert className="bg-blue-500/10 text-blue-600">
-                <Info className="h-5 w-5 mt-0.5" />
-                <AlertTitle className="font-medium mb-1">
-                    Request Information
-                </AlertTitle>
-                <AlertDescription className="text-blue-600/80">
-                    You can request 0.1 ETH every 24 hours. Make sure to provide
-                    a valid Ethereum address.
-                </AlertDescription>
-            </Alert>
+            {renderAlert()}
 
             <div className="space-y-4">
                 <div className="space-y-2">
                     <Input
                         placeholder="Enter your Ethereum address (0x...)"
-                        className="h-12 text-base px-4"
+                        value={address}
+                        onChange={(e) => handleAddressChange(e.target.value)}
+                        className={addressError ? "border-destructive" : ""}
                     />
-                    <p className="text-xs text-muted-foreground px-1">
-                        Enter the Ethereum address where you want to receive the
-                        tokens
-                    </p>
+                    {addressError && (
+                        <p className="text-xs text-destructive px-1">
+                            {addressError}
+                        </p>
+                    )}
+                    {!addressError && (
+                        <p className="text-xs text-muted-foreground px-1">
+                            Enter the Ethereum address where you want to receive
+                            the tokens
+                        </p>
+                    )}
                 </div>
 
-                <Button className="w-full h-12 text-base font-medium" size="lg">
+                <Button
+                    className="w-full h-12 text-base font-medium"
+                    size="lg"
+                    disabled={isZeroBalance || !isValid}
+                    onClick={handleRequest}
+                >
                     Request Tokens
                     <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
