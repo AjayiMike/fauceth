@@ -32,7 +32,7 @@ export const networkInfoMap = {
     [SupportedChainId.SEPOLIA]: {
         chainId: `0x${SupportedChainId.SEPOLIA.toString(16)}`,
         chainName: "Sepolia test network",
-        rpcUrls: ["https://sepolia.infura.io/v3/"],
+        rpcUrls: ["https://gateway.tenderly.co/public/sepolia"],
         blockExplorerUrls: ["https://sepolia.etherscan.io"],
         nativeCurrency: {
             name: "ETH",
