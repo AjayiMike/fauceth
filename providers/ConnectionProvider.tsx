@@ -64,7 +64,7 @@ export const ConnectionProvider = ({
                 info.rdns
             );
         } catch (error) {
-            console.error(error);
+            console.debug(error);
             throw new Error("Failed to connect to provider");
         }
     }
@@ -86,7 +86,7 @@ export const ConnectionProvider = ({
                 chainId: SupportedChainId.SEPOLIA,
             });
         } catch (error) {
-            console.error(error);
+            console.debug(error);
         }
     };
 
@@ -113,7 +113,7 @@ export const ConnectionProvider = ({
                 LOCAL_STORAGE_KEYS.PREVIOUSLY_CONNECTED_PROVIDER_RDNS
             );
         } catch (error) {
-            console.error(error);
+            console.debug(error);
         }
     };
 
@@ -127,7 +127,7 @@ export const ConnectionProvider = ({
             const { icon, rdns, uuid, name } = event.detail.info;
 
             if (!icon || !rdns || !uuid || !name) {
-                console.error("invalid eip6963 provider info received!");
+                console.debug("invalid eip6963 provider info received!");
                 return;
             }
             setInjectedProviders((prevProviders) => {

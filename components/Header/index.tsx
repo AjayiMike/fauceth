@@ -1,6 +1,7 @@
 import Account from "../Account";
 import Image from "next/image";
 import Link from "next/link";
+import NetworkDropdown from "../NetworkDropdown";
 
 const Header = () => {
     return (
@@ -10,7 +11,7 @@ const Header = () => {
                     <div className="flex items-center space-x-2">
                         <Link href="/" className="cursor-pointer">
                             <Image
-                                src="/faucet.svg"
+                                src="/fauceth.svg"
                                 alt="logo"
                                 width={32}
                                 height={32}
@@ -18,7 +19,8 @@ const Header = () => {
                             />
                         </Link>
                     </div>
-                    <div className="flex items-center">
+                    <div className="flex items-center space-x-4">
+                        <NetworkDropdown />
                         <Account />
                     </div>
                 </div>

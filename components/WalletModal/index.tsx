@@ -23,7 +23,7 @@ const WalletModal = () => {
             try {
                 await handleConnect(provider);
             } catch (error) {
-                console.error(error);
+                console.debug(error);
             }
         },
         [handleConnect]

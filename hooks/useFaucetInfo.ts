@@ -1,61 +1,35 @@
-import { FAUCET } from "@/config/abi";
-import { getPublicClient } from "@/config/networks";
+import { getNetworkBalance } from "@/lib/cache/networkBalances";
+import { calculateDailyClaimAmount } from "@/lib/faucet";
+import { useNetworksStore } from "@/lib/store/networksStore";
 import { useQuery } from "@tanstack/react-query";
 import { Address } from "viem";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const useFaucetInfo = (account?: Address) => {
-    const publicClient = getPublicClient();
-    const getData = async () => {
-        try {
-            const data = await publicClient.multicall({
-                contracts: [
-                    {
-                        abi: FAUCET,
-                        address: process.env
-                            .NEXT_PUBLIC_FAUCET_ADDRESS as Address,
-                        functionName: "cooldownDuration",
-                        args: [],
-                    },
-                    {
-                        abi: FAUCET,
-                        address: process.env
-                            .NEXT_PUBLIC_FAUCET_ADDRESS as Address,
-                        functionName: "dropAmount",
-                        args: [],
-                    },
-                    {
-                        abi: FAUCET,
-                        address: process.env
-                            .NEXT_PUBLIC_FAUCET_ADDRESS as Address,
-                        functionName: "getBalance",
-                        args: [],
-                    },
-                    {
-                        abi: FAUCET,
-                        address: process.env
-                            .NEXT_PUBLIC_FAUCET_ADDRESS as Address,
-                        functionName: "lastDrip",
-                        args: [account as Address],
-                    },
-                ],
-                multicallAddress: process.env
-                    .NEXT_PUBLIC_MULTICALL_ADDRESS as Address,
-                allowFailure: true,
-            });
+    const { selectedNetwork } = useNetworksStore();
 
-            return {
-                cooldownDuration: data[0].result,
-                dropAmount: data[1].result,
-                balance: data[2].result,
-                lastDrip: data[3].result,
-            };
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    return useQuery({
-        queryKey: ["faucetInfo", account],
-        queryFn: getData,
+    const { data, isLoading } = useQuery({
+        queryKey: [
+            "network-balance",
+            selectedNetwork?.chainId,
+            selectedNetwork?.rpc,
+            selectedNetwork?.nativeCurrency?.decimals,
+        ],
+        queryFn: () =>
+            getNetworkBalance(
+                selectedNetwork?.chainId || 0,
+                selectedNetwork?.rpc || [],
+                selectedNetwork?.nativeCurrency?.decimals || 18
+            ),
+        enabled: Boolean(selectedNetwork?.chainId && selectedNetwork?.rpc),
+        refetchInterval: 3000,
     });
+
+    return {
+        isLoading: isLoading || data?.isLoading,
+        balance: data?.balance,
+        cooldownDuration: 24 * 60 * 60,
+        dropAmount: calculateDailyClaimAmount(data?.balance || 0),
+        lastDrip: 0,
+    };
 };

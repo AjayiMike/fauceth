@@ -1,28 +1,26 @@
 import { useCallback } from "react";
 import useWalletClient from "./useWalletClient";
-import { FAUCET } from "@/config/abi";
-import { parseEther } from "viem";
-import { sepolia } from "viem/chains";
+import { Address, Chain, parseEther } from "viem";
+import { useConnection } from "@/providers/ConnectionProvider";
 const useDonate = () => {
+    const { account } = useConnection();
     const walletClient = useWalletClient();
 
     return useCallback(
-        async (amount: string) => {
+        async (chain: Chain, amount: string) => {
             if (!walletClient) {
                 throw new Error("No wallet client");
             }
 
-            return walletClient.writeContract({
-                chain: sepolia,
-                address: process.env
-                    .NEXT_PUBLIC_FAUCET_ADDRESS as `0x${string}`,
-                abi: FAUCET,
-                functionName: "donate",
+            return walletClient.sendTransaction({
+                chain: chain,
+                account: account as Address,
                 args: [],
                 value: parseEther(amount),
+                to: process.env.NEXT_PUBLIC_FAUCET_ADDRESS as Address,
             });
         },
-        [walletClient]
+        [account, walletClient]
     );
 };
 

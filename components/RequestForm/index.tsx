@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import { ArrowRight, Info, AlertTriangle, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
-import { formatEther, isAddress } from "viem";
-import { formatDuration } from "@/lib/utils";
+import { isAddress } from "viem";
+import { displayNumber, formatDuration } from "@/lib/utils/formatting";
 import { useState } from "react";
 import { getPublicClient } from "@/config/networks";
 import { toast } from "sonner";
@@ -16,13 +16,13 @@ const RequestForm = ({
     faucetAmount,
     cooldownPeriod,
 }: {
-    balance?: bigint;
-    faucetAmount?: bigint;
-    cooldownPeriod?: bigint;
+    balance?: number;
+    faucetAmount?: number;
+    cooldownPeriod?: number;
 }) => {
     const [address, setAddress] = useState("");
     const [addressError, setAddressError] = useState<string | null>(null);
-    const formattedBalance = balance ? formatEther(balance) : "0";
+    const formattedBalance = balance ? displayNumber(balance) : "0";
     const isZeroBalance = formattedBalance === "0";
     const isLowBalance = !isZeroBalance && Number(formattedBalance) < 1;
 
@@ -52,9 +52,9 @@ const RequestForm = ({
                     <AlertDescription className="text-yellow-600/80">
                         The faucet balance is running low ({formattedBalance}{" "}
                         ETH). You can still request{" "}
-                        {formatEther(faucetAmount || BigInt(0))} ETH every{" "}
-                        {formatDuration(cooldownPeriod || BigInt(0))}, but
-                        please consider donating to help maintain the faucet.
+                        {displayNumber(faucetAmount || 0)} ETH every{" "}
+                        {formatDuration(cooldownPeriod || 0)}, but please
+                        consider donating to help maintain the faucet.
                     </AlertDescription>
                 </Alert>
             );
@@ -67,9 +67,9 @@ const RequestForm = ({
                     Request Information
                 </AlertTitle>
                 <AlertDescription className="text-blue-600/80">
-                    You can request {formatEther(faucetAmount || BigInt(0))} ETH
-                    every {formatDuration(cooldownPeriod || BigInt(0))}. Make
-                    sure to provide a valid Ethereum address.
+                    You can request {displayNumber(faucetAmount || 0)} ETH every{" "}
+                    {formatDuration(cooldownPeriod || 0)}. Make sure to provide
+                    a valid Ethereum address.
                 </AlertDescription>
             </Alert>
         );
@@ -105,7 +105,7 @@ const RequestForm = ({
             }
             toast.success("Tokens requested successfully");
         } catch (err) {
-            console.error(err);
+            console.debug(err);
         }
     };
 

@@ -8,12 +8,13 @@ import NumericalInput from "../NumericalInput";
 import { useState } from "react";
 import useETHBalance from "@/hooks/useETHBalance";
 import { parseEther, WriteContractErrorType } from "viem";
-import { displayNumber } from "@/lib/utils";
 import useDonate from "@/hooks/useDonate";
 import { toast } from "sonner";
 import { useConnection } from "@/providers/ConnectionProvider";
 import { isSupportedChain } from "@/config";
 import { getPublicClient } from "@/config/networks";
+import { displayNumber } from "@/lib/utils/formatting";
+import { sepolia } from "viem/chains";
 const DonateForm = () => {
     const { isConnected, chainId } = useConnection();
     const { balance, formattedBalance, isLoading } = useETHBalance();
@@ -60,7 +61,7 @@ const DonateForm = () => {
                 return;
             }
 
-            const txHash = await donate(amount);
+            const txHash = await donate(sepolia, amount);
 
             toast.info("Transaction sent. Waiting for confirmation...");
 

@@ -77,7 +77,7 @@ export function isSupportedChain(
  */
 export const switchChain = async (chain: number, provider: EIP1193Provider) => {
     if (!isSupportedChain(chain))
-        return console.error("attempt to switch to a wrong chain!");
+        return console.debug("attempt to switch to a wrong chain!");
     try {
         await provider.request({
             method: "wallet_switchEthereumChain",
@@ -94,7 +94,7 @@ export const switchChain = async (chain: number, provider: EIP1193Provider) => {
                 });
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (_error: any) {
-                console.error("user rejected network addition: ", _error);
+                console.debug("user rejected network addition: ", _error);
             }
         }
     }

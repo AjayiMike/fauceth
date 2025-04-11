@@ -4,7 +4,7 @@ const Footer = () => {
             <div className="container mx-auto px-4">
                 <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500">
-                        © {new Date().getFullYear()} Faucet App
+                        © {new Date().getFullYear()} Fauceth
                     </span>
                     <a
                         href="https://github.com/ajayimike/faucet-app"

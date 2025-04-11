@@ -3,21 +3,20 @@
 import { Coins, Clock, Droplet } from "lucide-react";
 import { motion } from "framer-motion";
 import { FC, useMemo } from "react";
-import { formatEther } from "viem";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatDuration } from "@/lib/utils";
+import { displayNumber, formatDuration } from "@/lib/utils/formatting";
 
 const FaucetInfoSkeleton = () => {
     return (
         <div className="max-w-2xl mx-auto">
-            <div className="flex flex-wrap gap-4 items-center justify-center">
+            <div className="flex flex-wrap gap-4 items-center">
                 {[1, 2, 3].map((index) => (
                     <motion.div
                         key={index}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2, delay: index * 0.1 }}
-                        className="flex items-center gap-3 px-4 py-2 rounded-lg bg-secondary-foreground/20"
+                        className="flex items-center gap-3 px-4 py-2 rounded-lg bg-gray-200"
                     >
                         <Skeleton className="h-8 w-8 rounded-full" />
                         <div className="flex flex-col gap-1">
@@ -32,21 +31,23 @@ const FaucetInfoSkeleton = () => {
 };
 
 const FaucetInfo: FC<{
-    balance?: bigint;
-    faucetAmount?: bigint;
-    cooldownPeriod?: bigint;
+    balance: number | undefined;
+    faucetAmount: number | undefined;
+    cooldownPeriod: number | undefined;
 }> = ({ balance, faucetAmount, cooldownPeriod }) => {
     const items = useMemo(
         () => [
             {
                 title: "Balance",
-                value: `${balance ? formatEther(balance) : "0"} ETH`,
+                value: `${balance ? displayNumber(balance) : "0"} ETH`,
                 icon: Coins,
                 color: "text-green-500 bg-green-500/10",
             },
             {
                 title: "Faucet Amount",
-                value: `${faucetAmount ? formatEther(faucetAmount) : "0"} ETH`,
+                value: `${
+                    faucetAmount ? displayNumber(faucetAmount) : "0"
+                } ETH`,
                 icon: Droplet,
                 color: "text-blue-500 bg-blue-500/10",
             },
@@ -70,7 +71,7 @@ const FaucetInfo: FC<{
 
     return (
         <div className="max-w-2xl mx-auto">
-            <div className="flex flex-wrap gap-4 items-center justify-center">
+            <div className="flex flex-wrap gap-4 items-center">
                 {items.map((item, index) => (
                     <motion.div
                         key={item.title}

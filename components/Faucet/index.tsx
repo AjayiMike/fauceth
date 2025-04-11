@@ -12,14 +12,16 @@ import { Address } from "viem";
 
 const Faucet = () => {
     const { account } = useConnection();
-    const { data } = useFaucetInfo(account as Address | undefined);
+    const { balance, cooldownDuration, dropAmount } = useFaucetInfo(
+        account as Address | undefined
+    );
 
     return (
         <div className="container mx-auto px-4 py-8 space-y-8">
             <FaucetInfo
-                balance={data?.balance}
-                faucetAmount={data?.dropAmount}
-                cooldownPeriod={data?.cooldownDuration}
+                balance={balance ?? undefined}
+                faucetAmount={dropAmount ?? undefined}
+                cooldownPeriod={cooldownDuration ?? undefined}
             />
             <div className="max-w-2xl mx-auto">
                 <Tabs defaultValue="request" className="w-full">
@@ -41,9 +43,9 @@ const Faucet = () => {
                     </TabsList>
                     <TabsContent value="request" className="mt-6">
                         <RequestForm
-                            balance={data?.balance}
-                            faucetAmount={data?.dropAmount}
-                            cooldownPeriod={data?.cooldownDuration}
+                            balance={balance ?? undefined}
+                            faucetAmount={dropAmount ?? undefined}
+                            cooldownPeriod={cooldownDuration ?? undefined}
                         />
                     </TabsContent>
                     <TabsContent value="donate" className="mt-6">
