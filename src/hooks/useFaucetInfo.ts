@@ -25,11 +25,6 @@ export const useFaucetInfo = (account?: Address) => {
         refetchInterval: 3000,
     });
 
-    console.log(
-        "calculateDailyClaimAmount(data?.balance || 0),: ",
-        calculateDailyClaimAmount(data?.balance || 0)
-    );
-
     return {
         isLoading: isLoading || data?.isLoading,
         balance: data?.balance,

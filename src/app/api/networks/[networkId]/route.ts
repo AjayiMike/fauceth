@@ -34,8 +34,6 @@ export async function GET(
         // If no valid cache, fetch fresh data
         const networkDetails = await fetchNetworkDetails(networkId);
 
-        console.log("networkDetails: ", networkDetails);
-
         if (!networkDetails) {
             return error("Network not found", 404);
         }

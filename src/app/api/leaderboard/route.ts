@@ -49,9 +49,6 @@ export async function GET(req: NextRequest) {
             // "all-time" doesn't need a date filter
         }
 
-        // Add logging to debug date filter
-        console.log("Period:", period, "Date filter:", dateFilter);
-
         // Get top donors with basic info first
         const topDonorsBasic = await Donation.aggregate<AggregationResult>([
             { $match: dateFilter },

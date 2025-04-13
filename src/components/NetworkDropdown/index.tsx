@@ -13,11 +13,13 @@ import {
     CommandInput,
     CommandList,
 } from "@/components/ui/command";
-import { NetworkItem } from "./NetworkItem";
+import { NetworkItem, getStatusIcon } from "./NetworkItem";
 import { NetworkIcon } from "./NetworkIcon";
 import { useNetworksStore } from "@/lib/store/networksStore";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useQuery } from "@tanstack/react-query";
+import { getNetworkBalance } from "@/lib/cache/networkBalances";
 
 const NetworkDropdown = () => {
     const [open, setOpen] = useState(false);
@@ -26,6 +28,28 @@ const NetworkDropdown = () => {
     const { networks, selectedNetwork, setSelectedNetwork, isLoading } =
         useNetworksStore();
     const [parentNode, setParentNode] = useState<HTMLDivElement | null>(null);
+
+    // Get status for selected network
+    const {
+        data,
+        isLoading: balanceLoading,
+        isError,
+    } = useQuery({
+        queryKey: [
+            "network-balance",
+            selectedNetwork?.chainId,
+            selectedNetwork?.rpc,
+            selectedNetwork?.nativeCurrency?.decimals,
+        ],
+        queryFn: () =>
+            getNetworkBalance(
+                selectedNetwork!.chainId,
+                selectedNetwork!.rpc,
+                selectedNetwork!.nativeCurrency?.decimals || 18
+            ),
+        enabled: Boolean(selectedNetwork?.chainId && selectedNetwork?.rpc),
+        refetchInterval: 3000,
+    });
 
     // Handle dropdown open/close
     const handleOpenChange = useCallback((isOpen: boolean) => {
@@ -69,13 +93,22 @@ const NetworkDropdown = () => {
     return (
         <DropdownMenu open={open} onOpenChange={handleOpenChange}>
             <DropdownMenuTrigger asChild>
-                <button className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-accent hover:bg-accent/80 transition-colors cursor-pointer">
+                <button className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-accent hover:bg-accent/80 transition-colors cursor-pointer text-sm">
                     {selectedNetwork ? (
                         <>
-                            <NetworkIcon name={selectedNetwork.name} />
-                            <span className="font-medium">
-                                {selectedNetwork.name}
-                            </span>
+                            <div className="flex items-center space-x-2">
+                                <NetworkIcon name={selectedNetwork.name} />
+                                <span className="font-medium">
+                                    {selectedNetwork.name}
+                                </span>
+                            </div>
+                            <div className="ml-2">
+                                {getStatusIcon({
+                                    isLoading: balanceLoading,
+                                    isError,
+                                    data,
+                                })}
+                            </div>
                         </>
                     ) : (
                         <span className="font-medium">Select Network</span>

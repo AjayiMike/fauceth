@@ -9,6 +9,28 @@ import { useQuery } from "@tanstack/react-query";
 import { displayNumber } from "@/lib/utils/formatting";
 import { cn } from "@/lib/utils";
 
+interface NetworkStatusData {
+    isLoading?: boolean;
+    isError?: boolean;
+    data?: {
+        isLoading?: boolean;
+        isError?: boolean;
+        balance: number | null;
+    } | null;
+}
+
+export const getStatusIcon = ({
+    isLoading,
+    isError,
+    data,
+}: NetworkStatusData) => {
+    if (isLoading || !data || data.isLoading)
+        return <PendingIcon className="text-gray-600" />;
+    if (isError || data.balance === null || data?.isError)
+        return <InactiveIcon className="text-destructive/50" />;
+    return <ActiveIcon className="text-green-600" />;
+};
+
 interface NetworkItemProps {
     network: INetwork;
     isSelected: boolean;
@@ -36,19 +58,6 @@ export const NetworkItem = memo(
                 refetchInterval: 3000,
             });
 
-            const getStatusIcon = () => {
-                if (
-                    isLoading ||
-                    !data ||
-                    data.balance === null ||
-                    data.isLoading
-                )
-                    return <PendingIcon className="text-gray-600" />;
-                if (isError || data?.isError)
-                    return <InactiveIcon className="text-destructive/50" />;
-                return <ActiveIcon className="text-green-600" />;
-            };
-
             const status = useMemo(() => {
                 if (isLoading || data?.isLoading) return "Pending";
                 if (isError || data?.isError) return "Inactive";
@@ -71,7 +80,7 @@ export const NetworkItem = memo(
                     <div className="flex items-center space-x-3 max-w-[70%]">
                         <NetworkIcon name={network.name} />
                         <div className="flex flex-col">
-                            <span className="font-medium whitespace-nowrap overflow-hidden overflow-ellipsis w-[200px]">
+                            <span className="font-medium whitespace-nowrap overflow-hidden overflow-ellipsis w-[200px] text-sm">
                                 {network.name}
                             </span>
                             <span className="text-xs text-muted-foreground inline-block whitespace-nowrap overflow-hidden overflow-ellipsis">
@@ -80,13 +89,14 @@ export const NetworkItem = memo(
                         </div>
                     </div>
                     <div className="flex flex-col items-end">
-                        <div title={status}>{getStatusIcon()}</div>
+                        <div title={status}>
+                            {getStatusIcon({ isLoading, isError, data })}
+                        </div>
                         {!data && isLoading ? (
                             <Skeleton className="h-4 w-16 mt-1" />
                         ) : (
                             <span className="text-xs text-muted-foreground mt-1 inline-block whitespace-nowrap overflow-hidden overflow-ellipsis">
-                                {data?.balance !== null &&
-                                data?.balance !== undefined
+                                {data && data?.balance !== null
                                     ? `${displayNumber(data?.balance, 3)} ${
                                           network.nativeCurrency?.symbol ||
                                           "ETH"
@@ -95,9 +105,6 @@ export const NetworkItem = memo(
                             </span>
                         )}
                     </div>
-                    {/* {isSelected && (
-                        <Check className="h-4 w-4 text-green-600 ml-2" />
-                    )} */}
                 </CommandItem>
             );
         }
