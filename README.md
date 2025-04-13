@@ -16,25 +16,37 @@ A community-funded testnet ETH faucet for all EVM chains where developers can do
 
 #### macOS/Linux
 
-1. Create MongoDB data directory:
+1. Clean Up (If Needed)
+
+If you have an existing MongoDB instance running:
+
+```bash
+# Stop any running MongoDB instances
+pkill mongod
+
+# Wait for processes to stop
+sleep 2
+```
+
+2. Create MongoDB data directory:
 
     ```bash
     mkdir -p ~/mongodb/data/rs0
     ```
 
-2. Start MongoDB with replica set:
+3. Start MongoDB with replica set:
 
     ```bash
     mongod --replSet rs0 --port 27017 --dbpath ~/mongodb/data/rs0 --fork --logpath ~/mongodb/data/rs0/mongodb.log
     ```
 
-3. Initialize replica set:
+4. Initialize replica set:
 
     ```bash
     mongosh --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: "localhost:27017"}]})'
     ```
 
-4. To stop MongoDB:
+5. To stop MongoDB:
     ```bash
     pkill -f "mongod.*rs0"
     ```

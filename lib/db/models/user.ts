@@ -10,6 +10,11 @@ export interface IUser extends IBase {
     requestCount: number;
     lastRequestAt: Date;
     lastDonationAt: Date;
+    socialLinks?: {
+        twitter?: string;
+        github?: string;
+        linkedin?: string;
+    };
 }
 
 const userSchema = new Schema<IUser>(
@@ -52,6 +57,14 @@ const userSchema = new Schema<IUser>(
             type: Date,
             required: true,
         },
+        socialLinks: {
+            type: {
+                twitter: String,
+                github: String,
+                linkedin: String,
+            },
+            required: false,
+        },
     },
     { timestamps: true }
 );
@@ -59,6 +72,7 @@ const userSchema = new Schema<IUser>(
 userSchema.index({ createdAt: -1 });
 userSchema.index({ lastRequestAt: -1 });
 userSchema.index({ lastDonationAt: -1 });
+userSchema.index({ totalDonations: -1 }); // Add index for leaderboard queries
 
 // Safe model registration
 export const User =
@@ -74,4 +88,11 @@ export const userZodSchema = z.object({
     requestCount: z.number().int().nonnegative(),
     lastRequestAt: z.date(),
     lastDonationAt: z.date(),
+    socialLinks: z
+        .object({
+            twitter: z.string().optional(),
+            github: z.string().optional(),
+            linkedin: z.string().optional(),
+        })
+        .optional(),
 });

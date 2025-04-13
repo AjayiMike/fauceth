@@ -39,9 +39,9 @@ export const NetworkItem = memo(
             const getStatusIcon = () => {
                 if (
                     isLoading ||
-                    // data?.balance === null ||
-                    // data?.balance === undefined ||
-                    data?.isLoading
+                    !data ||
+                    data.balance === null ||
+                    data.isLoading
                 )
                     return <PendingIcon className="text-gray-600" />;
                 if (isError || data?.isError)
@@ -63,7 +63,7 @@ export const NetworkItem = memo(
                     value={network.chainId.toString()}
                     onSelect={() => onSelect(network)}
                     className={cn(
-                        "flex items-center justify-between py-3",
+                        "flex items-center justify-between py-3 cursor-pointer",
                         isSelected && "bg-green-300/50 pointer-events-none"
                     )}
                     disabled={isSelected}
@@ -87,7 +87,7 @@ export const NetworkItem = memo(
                             <span className="text-xs text-muted-foreground mt-1 inline-block whitespace-nowrap overflow-hidden overflow-ellipsis">
                                 {data?.balance !== null &&
                                 data?.balance !== undefined
-                                    ? `${displayNumber(data?.balance)} ${
+                                    ? `${displayNumber(data?.balance, 3)} ${
                                           network.nativeCurrency?.symbol ||
                                           "ETH"
                                       }`

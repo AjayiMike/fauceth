@@ -39,14 +39,14 @@ const FaucetInfo: FC<{
         () => [
             {
                 title: "Balance",
-                value: `${balance ? displayNumber(balance) : "0"} ETH`,
+                value: `${balance ? displayNumber(balance, 3) : "0"} ETH`,
                 icon: Coins,
                 color: "text-green-500 bg-green-500/10",
             },
             {
                 title: "Faucet Amount",
                 value: `${
-                    faucetAmount ? displayNumber(faucetAmount) : "0"
+                    faucetAmount ? displayNumber(faucetAmount, 3) : "0"
                 } ETH`,
                 icon: Droplet,
                 color: "text-blue-500 bg-blue-500/10",

@@ -9,6 +9,7 @@ import { Droplet, Heart } from "lucide-react";
 import { useConnection } from "@/providers/ConnectionProvider";
 import { useFaucetInfo } from "@/hooks/useFaucetInfo";
 import { Address } from "viem";
+import { Leaderboard } from "../Leaderboard";
 
 const Faucet = () => {
     const { account } = useConnection();
@@ -55,6 +56,9 @@ const Faucet = () => {
             </div>
             <div className="max-w-2xl mx-auto">
                 <TransactionsTable />
+            </div>
+            <div className="max-w-2xl mx-auto mt-4">
+                <Leaderboard />
             </div>
         </div>
     );

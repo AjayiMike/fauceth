@@ -35,8 +35,12 @@ const donationSchema = new Schema<IDonation>(
     { timestamps: true }
 );
 
+// Indexes for leaderboard queries
 donationSchema.index({ userId: 1, createdAt: -1 });
 donationSchema.index({ networkId: 1, createdAt: -1 });
+donationSchema.index({ createdAt: -1 });
+donationSchema.index({ amount: -1 });
+donationSchema.index({ userId: 1, amount: -1 }); // For top donors aggregation
 
 // Safe model registration
 export const Donation =

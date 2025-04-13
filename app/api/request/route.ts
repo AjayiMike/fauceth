@@ -6,9 +6,10 @@ import {
     getOrCreateUser,
     recordRequest,
     getOrCreateIpAddress,
+    checkUserExists,
 } from "@/lib/db/operations";
 import { z } from "zod";
-import { getAddress } from "viem";
+import { Address, getAddress } from "viem";
 import {
     fetchNetworkDetails,
     filterWorkingRPCs,
@@ -19,6 +20,7 @@ import { RequestFaucetResponse } from "@/lib/api/types";
 import { withTransaction } from "@/lib/db/with-db";
 import { parseEther } from "viem";
 import { sepolia } from "viem/chains";
+import { getPassportScore } from "@/lib/passport";
 
 const requestBodySchema = z.object({
     networkId: z.number().int().positive(),
@@ -63,11 +65,23 @@ export async function POST(req: NextRequest) {
                 );
             }
 
-            // Get or create user and IP address
-            const [user, ipAddressId] = await Promise.all([
-                getOrCreateUser(checkSummedAddress, session),
-                getOrCreateIpAddress(ipAddress, session),
-            ]);
+            const userExists = await checkUserExists(
+                checkSummedAddress,
+                session
+            );
+
+            // if user does not exist in the system yet, check their passport score and ensure it meets threshold
+            if (!userExists) {
+                const [meetsThreshold, score] = await getPassportScore(
+                    checkSummedAddress
+                );
+                if (!meetsThreshold) {
+                    return error(
+                        `Passport score too low. Required at least ${process.env.PASSPORT_SCORE_THRESHOLD}, Actual: ${score}`,
+                        403
+                    );
+                }
+            }
 
             // Get network details and working RPCs
             const networkDetails = await fetchNetworkDetails(networkId);
@@ -77,14 +91,24 @@ export async function POST(req: NextRequest) {
                 return error("No working RPCs found", 503);
             }
 
-            // Get user's ETH balance
+            // Get fauce's ETH balance
             const balance = await getETHBalance(
-                checkSummedAddress,
+                process.env.NEXT_PUBLIC_FAUCET_ADDRESS as Address,
                 workingRPCs
             );
 
             // Calculate claim amount
             const claimAmount = calculateDailyClaimAmount(balance);
+
+            if (claimAmount === 0) {
+                return error("Low faucet balance", 503);
+            }
+
+            // Get or create user and IP address
+            const [user, ipAddressId] = await Promise.all([
+                getOrCreateUser(checkSummedAddress, session),
+                getOrCreateIpAddress(ipAddress, session),
+            ]);
 
             // Send ETH
             const txHash = await sendETH(

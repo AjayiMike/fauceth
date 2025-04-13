@@ -15,11 +15,14 @@ import { isSupportedChain } from "@/config";
 import { getPublicClient } from "@/config/networks";
 import { displayNumber } from "@/lib/utils/formatting";
 import { sepolia } from "viem/chains";
+import { SocialLinksModal } from "../SocialLinksModal";
+
 const DonateForm = () => {
-    const { isConnected, chainId } = useConnection();
+    const { isConnected, chainId, account } = useConnection();
     const { balance, formattedBalance, isLoading } = useETHBalance();
     const donate = useDonate();
     const [amount, setAmount] = useState("");
+    const [showSocialModal, setShowSocialModal] = useState(false);
 
     const insufficientBalance =
         balance !== undefined &&
@@ -49,13 +52,14 @@ const DonateForm = () => {
             }
 
             // Check if user has sufficient balance
-
             if (insufficientBalance) {
                 toast.error(
                     `You need ${displayNumber(
-                        amount
+                        amount,
+                        3
                     )} ETH to donate. Your balance: ${displayNumber(
-                        formattedBalance
+                        formattedBalance,
+                        3
                     )} ETH`
                 );
                 return;
@@ -75,8 +79,31 @@ const DonateForm = () => {
                 throw new Error("Transaction failed");
             }
 
+            // Record donation on backend
+            const response = await fetch("/api/donate", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    networkId: sepolia.id,
+                    txHash,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Failed to record donation");
+            }
+
             // Show success message
             toast.success(`Successfully donated ${amount} ETH! Thank you!`);
+
+            // If this was their first donation, show the social links modal
+            if (data.isFirstDonation) {
+                setShowSocialModal(true);
+            }
 
             // Reset form
             setAmount("");
@@ -86,56 +113,93 @@ const DonateForm = () => {
         }
     };
 
+    const handleSocialLinksSubmit = async (links: {
+        twitter?: string;
+        github?: string;
+        linkedin?: string;
+    }) => {
+        try {
+            const response = await fetch("/api/users/social-links", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    address: account,
+                    ...links,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to save social links");
+            }
+
+            toast.success("Social links saved successfully!");
+        } catch (error) {
+            toast.error("Failed to save social links. Please try again later.");
+            console.error("Error saving social links:", error);
+        }
+    };
+
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-6"
-        >
-            <Alert className="bg-rose-500/10 text-rose-600">
-                <Info className="h-5 w-5 mt-0.5" />
-                <AlertTitle className="font-medium mb-1">
-                    Support the Community
-                </AlertTitle>
-                <AlertDescription className="text-rose-600/80">
-                    Your donations help keep this faucet running. Any amount of
-                    ETH is appreciated.
-                </AlertDescription>
-            </Alert>
+        <>
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+            >
+                <Alert className="bg-rose-500/10 text-rose-600">
+                    <Info className="h-5 w-5 mt-0.5" />
+                    <AlertTitle className="font-medium mb-1">
+                        Support the Community
+                    </AlertTitle>
+                    <AlertDescription className="text-rose-600/80">
+                        Your donations help keep this faucet running. Any amount
+                        of ETH is appreciated.
+                    </AlertDescription>
+                </Alert>
 
-            <div className="space-y-4">
-                <div className="space-y-2">
-                    <div className="relative">
-                        <div className="text-sm text-muted-foreground mb-1">
-                            Your current balance:{" "}
-                            {displayNumber(formattedBalance)} ETH
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <div className="relative">
+                            <div className="text-sm text-muted-foreground mb-1">
+                                Your current balance:{" "}
+                                {displayNumber(formattedBalance, 3)} ETH
+                            </div>
+                            <NumericalInput
+                                value={amount}
+                                onUserInput={(value) => {
+                                    setAmount(value);
+                                }}
+                                placeholder="Enter amount to donate"
+                                isError={isError}
+                            />
                         </div>
-                        <NumericalInput
-                            value={amount}
-                            onUserInput={(value) => {
-                                setAmount(value);
-                            }}
-                            placeholder="Enter amount to donate"
-                            isError={isError}
-                        />
+                        <p className="text-xs text-muted-foreground px-1">
+                            Enter the amount of ETH you want to donate to the
+                            faucet
+                        </p>
                     </div>
-                    <p className="text-xs text-muted-foreground px-1">
-                        Enter the amount of ETH you want to donate to the faucet
-                    </p>
-                </div>
 
-                <Button
-                    className="w-full h-12 text-base font-medium bg-rose-500 hover:bg-rose-600"
-                    size="lg"
-                    disabled={isError || isLoading || !Boolean(amount)}
-                    onClick={handleDonate}
-                >
-                    Donate
-                    <Heart className="w-5 h-5 ml-2" />
-                </Button>
-            </div>
-        </motion.div>
+                    <Button
+                        className="w-full h-12 text-base font-medium bg-rose-500 hover:bg-rose-600"
+                        size="lg"
+                        disabled={isError || isLoading || !Boolean(amount)}
+                        onClick={handleDonate}
+                    >
+                        Donate
+                        <Heart className="w-5 h-5 ml-2" />
+                    </Button>
+                </div>
+            </motion.div>
+
+            <SocialLinksModal
+                isOpen={showSocialModal}
+                onClose={() => setShowSocialModal(false)}
+                onSubmit={handleSocialLinksSubmit}
+            />
+        </>
     );
 };
 

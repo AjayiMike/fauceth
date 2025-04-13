@@ -16,8 +16,9 @@ import { privateKeyToAccount } from "viem/accounts";
  * @returns The daily claim amount.
  */
 export const calculateDailyClaimAmount = (faucetBalance: number): number => {
+    console.log("faucetBalance: ", faucetBalance);
     const MAX_CLAIM = 1; // Maximum claim amount in ETH
-    const MIN_BALANCE = 10; // Minimum balance to maintain in faucet
+    const MIN_BALANCE = 5; // Minimum balance to maintain in faucet
     const OPTIMAL_BALANCE = 100; // Balance at which we can give max claim
 
     // If balance is below minimum, return 0

@@ -22,7 +22,7 @@ const RequestForm = ({
 }) => {
     const [address, setAddress] = useState("");
     const [addressError, setAddressError] = useState<string | null>(null);
-    const formattedBalance = balance ? displayNumber(balance) : "0";
+    const formattedBalance = balance ? displayNumber(balance, 3) : "0";
     const isZeroBalance = formattedBalance === "0";
     const isLowBalance = !isZeroBalance && Number(formattedBalance) < 1;
 
@@ -52,7 +52,7 @@ const RequestForm = ({
                     <AlertDescription className="text-yellow-600/80">
                         The faucet balance is running low ({formattedBalance}{" "}
                         ETH). You can still request{" "}
-                        {displayNumber(faucetAmount || 0)} ETH every{" "}
+                        {displayNumber(faucetAmount || 0, 3)} ETH every{" "}
                         {formatDuration(cooldownPeriod || 0)}, but please
                         consider donating to help maintain the faucet.
                     </AlertDescription>
@@ -67,9 +67,9 @@ const RequestForm = ({
                     Request Information
                 </AlertTitle>
                 <AlertDescription className="text-blue-600/80">
-                    You can request {displayNumber(faucetAmount || 0)} ETH every{" "}
-                    {formatDuration(cooldownPeriod || 0)}. Make sure to provide
-                    a valid Ethereum address.
+                    You can request {displayNumber(faucetAmount || 0, 3)} ETH
+                    every {formatDuration(cooldownPeriod || 0)}. Make sure to
+                    provide a valid Ethereum address.
                 </AlertDescription>
             </Alert>
         );

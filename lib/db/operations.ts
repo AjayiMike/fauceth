@@ -57,13 +57,25 @@ export async function updateRateLimit(
     );
 }
 
-export async function getOrCreateUser(
+export async function checkUserExists(
+    address: string,
+    session?: ClientSession
+): Promise<boolean> {
+    const user = await getUser(address, session);
+    return !!user;
+}
+
+export async function getUser(
+    address: string,
+    session?: ClientSession
+): Promise<IUser | null> {
+    return User.findOne({ address }).session(session || null);
+}
+
+export async function createUser(
     address: string,
     session?: ClientSession
 ): Promise<IUser> {
-    const user = await User.findOne({ address }).session(session || null);
-    if (user) return user;
-
     const now = new Date();
     const newUser = await User.create(
         [
@@ -81,6 +93,16 @@ export async function getOrCreateUser(
     );
 
     return newUser[0];
+}
+
+export async function getOrCreateUser(
+    address: string,
+    session?: ClientSession
+): Promise<IUser> {
+    const user = await getUser(address, session);
+    if (user) return user;
+    const newUser = await createUser(address, session);
+    return newUser;
 }
 
 export async function recordDonation(
