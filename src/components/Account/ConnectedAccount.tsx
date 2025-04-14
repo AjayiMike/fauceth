@@ -1,21 +1,17 @@
 import { LogOut } from "lucide-react";
 import Image from "next/image";
 
-import { networkInfoMap, SupportedChainId } from "@/config";
 import useCopyClipboard from "@/hooks/useCopyClipboard";
 import { useConnection } from "@/providers/ConnectionProvider";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { AlertCircle, CheckCheck, Copy, ExternalLink } from "lucide-react";
 import { Button } from "../ui/button";
+import { getCachedNetwork } from "@/lib/networks/cache";
+import { isSupportedChain } from "@/lib/networks";
 
 export const ConnectedAccount = () => {
-    const {
-        account,
-        chainId,
-        connectedProvider,
-        handleSwitchChain,
-        handleDisconnect,
-    } = useConnection();
+    const { account, chainId, connectedProvider, handleDisconnect } =
+        useConnection();
     const [copied, copy] = useCopyClipboard();
 
     const shortenedAddress = account
@@ -23,10 +19,8 @@ export const ConnectedAccount = () => {
         : "";
 
     const explorerUrl = chainId
-        ? networkInfoMap[chainId as SupportedChainId]?.blockExplorerUrls[0]
+        ? getCachedNetwork(chainId)?.explorers[0]?.url
         : "";
-
-    const isSepolia = chainId === SupportedChainId.SEPOLIA;
 
     return (
         <Popover>
@@ -40,8 +34,8 @@ export const ConnectedAccount = () => {
                         className="w-5 h-5 rounded"
                     />
                     <span>{shortenedAddress}</span>
-                    {!isSepolia && (
-                        <AlertCircle className="w-4 h-4 text-yellow-500" />
+                    {!isSupportedChain(chainId) && (
+                        <AlertCircle className="w-4 h-4 text-destructive" />
                     )}
                 </Button>
             </PopoverTrigger>
@@ -92,15 +86,6 @@ export const ConnectedAccount = () => {
                             View
                         </Button>
                     </div>
-                    {!isSepolia && (
-                        <Button
-                            variant="secondary"
-                            className="w-full"
-                            onClick={handleSwitchChain}
-                        >
-                            Switch to Sepolia
-                        </Button>
-                    )}
                     <Button
                         variant="destructive"
                         className="w-full"

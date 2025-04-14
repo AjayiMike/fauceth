@@ -13,6 +13,7 @@ import {
     TransactionReceipt,
 } from "viem";
 import { TESTNET_KEYWORDS } from "@/config/networks";
+import { getCachedNetwork } from "./cache";
 
 export const CONFIG = {
     API_ENDPOINTS: {
@@ -297,3 +298,14 @@ export const validateChainId = (chainId: number): void => {
         throw new Error(`Invalid chainId ${chainId}`);
     }
 };
+
+/**
+ * @title isSupportedChain
+ * @dev Function to check if a chain is supported.
+ * @param chainId The chain ID to check.
+ * @returns True if the chain ID is supported, false otherwise.
+ */
+export function isSupportedChain(chainId: number | null | undefined): boolean {
+    if (!chainId) return false;
+    return getCachedNetwork(chainId) !== null;
+}

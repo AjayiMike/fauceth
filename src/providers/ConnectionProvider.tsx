@@ -4,7 +4,6 @@ import {
     EIP6963EventNames,
     isPreviouslyConnectedProvider,
     LOCAL_STORAGE_KEYS,
-    SupportedChainId,
     switchChain,
 } from "@/config";
 import { createContext, useContext, useEffect, useState } from "react";
@@ -16,7 +15,7 @@ type StateType = {
     connectedProvider?: EIP6963ProviderDetail;
     availableProviders?: EIP6963ProviderDetail[];
     handleConnect: (provider: EIP6963ProviderDetail) => Promise<void>;
-    handleSwitchChain: () => Promise<void>;
+    handleSwitchChain: (chainId: number) => Promise<void>;
     handleDisconnect: () => Promise<void>;
 };
 
@@ -73,17 +72,17 @@ export const ConnectionProvider = ({
      * @title handleSwitchChain
      * @dev Function to handle switching the chain.
      */
-    const handleSwitchChain = async () => {
+    const handleSwitchChain = async (chainId: number) => {
         try {
             if (!connection) return;
             const provider = injectedProviders.get(
                 connection.providerUUID
             )!.provider;
 
-            await switchChain(SupportedChainId.SEPOLIA, provider);
+            await switchChain(chainId, provider);
             setConnection({
                 ...connection,
-                chainId: SupportedChainId.SEPOLIA,
+                chainId,
             });
         } catch (error) {
             console.debug(error);

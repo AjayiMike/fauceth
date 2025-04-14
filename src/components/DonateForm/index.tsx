@@ -11,11 +11,11 @@ import { parseEther, WriteContractErrorType } from "viem";
 import useDonate from "@/hooks/useDonate";
 import { toast } from "sonner";
 import { useConnection } from "@/providers/ConnectionProvider";
-import { isSupportedChain } from "@/config";
 import { getPublicClient } from "@/config/networks";
 import { displayNumber } from "@/lib/utils/formatting";
 import { sepolia } from "viem/chains";
 import { SocialLinksModal } from "../SocialLinksModal";
+import { isSupportedChain } from "@/lib/networks";
 
 const DonateForm = () => {
     const { isConnected, chainId, account } = useConnection();

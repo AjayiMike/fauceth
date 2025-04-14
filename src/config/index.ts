@@ -1,3 +1,6 @@
+import { isSupportedChain } from "@/lib/networks";
+import { getCachedNetwork } from "@/lib/networks/cache";
+
 /**
  * @title EIP6963EventNames
  * @dev Enum defining EIP-6963 event names.
@@ -8,38 +11,12 @@ export enum EIP6963EventNames {
 }
 
 /**
- * @title SupportedChainId
- * @dev Enum defining supported chain IDs.
- */
-export enum SupportedChainId {
-    SEPOLIA = 11155111,
-}
-
-/**
  * @title LOCAL_STORAGE_KEYS
  * @dev Object containing local storage keys used in the dApp PREVIOUSLY_CONNECTED_PROVIDER_RDNS is the key under which the rdns of the previously connected provider is stored.
  * @
  */
 export const LOCAL_STORAGE_KEYS = {
     PREVIOUSLY_CONNECTED_PROVIDER_RDNS: "PREVIOUSLY_CONNECTED_PROVIDER_RDNS",
-};
-
-/**
- * @title networkInfoMap
- * @dev Object containing network information for supported chains.
- */
-export const networkInfoMap = {
-    [SupportedChainId.SEPOLIA]: {
-        chainId: `0x${SupportedChainId.SEPOLIA.toString(16)}`,
-        chainName: "Sepolia test network",
-        rpcUrls: ["https://gateway.tenderly.co/public/sepolia"],
-        blockExplorerUrls: ["https://sepolia.etherscan.io"],
-        nativeCurrency: {
-            name: "ETH",
-            symbol: "ETH",
-            decimals: 18,
-        },
-    },
 };
 
 /**
@@ -54,19 +31,6 @@ export function isPreviouslyConnectedProvider(providerRDNS: string): boolean {
             LOCAL_STORAGE_KEYS.PREVIOUSLY_CONNECTED_PROVIDER_RDNS
         ) === providerRDNS
     );
-}
-
-/**
- * @title isSupportedChain
- * @dev Function to check if a chain is supported.
- * @param chainId The chain ID to check.
- * @returns True if the chain ID is supported, false otherwise.
- */
-export function isSupportedChain(
-    chainId: number | null | undefined
-): chainId is SupportedChainId {
-    if (!chainId) return false;
-    return !!SupportedChainId[chainId];
 }
 
 /**
@@ -86,7 +50,7 @@ export const switchChain = async (chain: number, provider: EIP1193Provider) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         if (error.code === 4902 || error.code === -32603) {
-            const chainInfo = networkInfoMap[chain];
+            const chainInfo = getCachedNetwork(chain);
             try {
                 await provider.request({
                     method: "wallet_addEthereumChain",
