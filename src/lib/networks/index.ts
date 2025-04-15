@@ -1,4 +1,4 @@
-import { ChainidNetworkAPIResponseType } from "@/types/network";
+import { ChainidNetworkAPIResponseType, INetwork } from "@/types/network";
 import { retry } from "../retry";
 import {
     Address,
@@ -309,3 +309,82 @@ export function isSupportedChain(chainId: number | null | undefined): boolean {
     if (!chainId) return false;
     return getCachedNetwork(chainId) !== null;
 }
+
+/**
+ * @title getNetworkInfo
+ * @dev Retrieves network information for a given chain ID, first checking the cache
+ *      and falling back to fetching from the API if not found.
+ *
+ * @notice This function first attempts to retrieve the network from the cache.
+ *         If not found, it fetches the network details from the ChainID API,
+ *         validates the network using filterDesiredNetworks, and returns
+ *         a properly formatted INetwork object.
+ *
+ * @param chainId The chain ID of the network to retrieve
+ * @return Promise<INetwork> A promise that resolves to the network information
+ * @throws Error if the network cannot be fetched from the API or is not supported
+ *
+ * @example
+ * // Get network info for Sepolia testnet
+ * const sepoliaNetwork = await getNetworkInfo(11155111);
+ */
+export const getNetworkInfo = async (chainId: number): Promise<INetwork> => {
+    console.log(
+        `[getNetworkInfo] Fetching network info for chainId: ${chainId}`
+    );
+
+    // First try to get from cache
+    const cachedNetwork = getCachedNetwork(chainId);
+    if (cachedNetwork) {
+        console.log(
+            `[getNetworkInfo] Found network in cache: ${cachedNetwork.name}`
+        );
+        return cachedNetwork;
+    }
+
+    // If not in cache, fetch from API
+    try {
+        console.log(`[getNetworkInfo] Network not in cache, fetching from API`);
+        const networkDetails = await fetchNetworkDetails(chainId);
+        console.log(
+            `[getNetworkInfo] Fetched network details: ${networkDetails.name}`
+        );
+
+        // Validate the network using filterDesiredNetworks
+        const validatedNetworks = filterDesiredNetworks([networkDetails]);
+        console.log(
+            `[getNetworkInfo] Validated networks count: ${validatedNetworks.length}`
+        );
+
+        if (validatedNetworks.length === 0) {
+            console.log(
+                `[getNetworkInfo] Network not supported: ${networkDetails.name}`
+            );
+            throw new Error(`Network with chainId ${chainId} is not supported`);
+        }
+
+        const validatedNetwork = validatedNetworks[0];
+        console.log(
+            `[getNetworkInfo] Using validated network: ${validatedNetwork.name}`
+        );
+
+        // Create network object
+        const network: INetwork = {
+            chainId: validatedNetwork.chainId,
+            name: validatedNetwork.name,
+            rpc: validatedNetwork.rpc.filter(
+                (rpc) => !rpc.startsWith("wss://")
+            ),
+            nativeCurrency: validatedNetwork.nativeCurrency,
+            explorers: validatedNetwork.explorers || [],
+        };
+
+        return network;
+    } catch (error) {
+        console.error(
+            `[getNetworkInfo] Error fetching network info for chainId ${chainId}:`,
+            error
+        );
+        throw error; // Re-throw the original error to preserve the message
+    }
+};

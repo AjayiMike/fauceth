@@ -1,6 +1,6 @@
 import { success, error } from "@/lib/api/response";
 import { HealthCheckResponse, HealthCheckStatus } from "@/lib/api/types";
-import { fetchNetworkDetails, filterWorkingRPCs } from "@/lib/networks";
+import { filterWorkingRPCs, getNetworkInfo } from "@/lib/networks";
 import { withDB } from "@/lib/db/with-db";
 
 export async function GET() {
@@ -9,7 +9,7 @@ export async function GET() {
             let status: HealthCheckStatus = HealthCheckStatus.Healthy;
 
             // Try to get network details from chainlist
-            const networkDetails = await fetchNetworkDetails(11155111); // Sepolia chainId
+            const networkDetails = await getNetworkInfo(11155111); // Sepolia chainId
             if (!networkDetails.rpc.length) {
                 status = HealthCheckStatus.Degraded;
             }

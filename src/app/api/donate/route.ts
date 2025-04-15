@@ -9,8 +9,8 @@ import { donationZodSchema } from "@/lib/db/models/donation";
 import { z } from "zod";
 import { Address, checksumAddress, formatUnits, Hex, getAddress } from "viem";
 import {
-    fetchNetworkDetails,
     filterWorkingRPCs,
+    getNetworkInfo,
     getTransaction,
     isMatchingAddress,
 } from "@/lib/networks";
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
         }
 
         // fetch network details
-        const networkDetails = await fetchNetworkDetails(networkId);
+        const networkDetails = await getNetworkInfo(networkId);
         if (!networkDetails.rpc.length) {
             await session.abortTransaction();
             return error("No RPC URLs found for network", 400);

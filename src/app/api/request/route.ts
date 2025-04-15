@@ -11,9 +11,9 @@ import {
 import { z } from "zod";
 import { Address, getAddress } from "viem";
 import {
-    fetchNetworkDetails,
     filterWorkingRPCs,
     getETHBalance,
+    getNetworkInfo,
 } from "@/lib/networks";
 import { calculateDailyClaimAmount, sendETH } from "@/lib/faucet";
 import { RequestFaucetResponse } from "@/lib/api/types";
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
             }
 
             // Get network details and working RPCs
-            const networkDetails = await fetchNetworkDetails(networkId);
+            const networkDetails = await getNetworkInfo(networkId);
             const workingRPCs = await filterWorkingRPCs(networkDetails.rpc);
 
             if (workingRPCs.length === 0) {
