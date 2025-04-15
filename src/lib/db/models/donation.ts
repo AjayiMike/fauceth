@@ -41,6 +41,8 @@ donationSchema.index({ networkId: 1, createdAt: -1 });
 donationSchema.index({ createdAt: -1 });
 donationSchema.index({ amount: -1 });
 donationSchema.index({ userId: 1, amount: -1 }); // For top donors aggregation
+// compound index for date-based queries
+donationSchema.index({ createdAt: -1, userId: 1, amount: -1 });
 
 // Safe model registration
 export const Donation =
