@@ -1,4 +1,3 @@
-import Account from "../Account";
 import Image from "next/image";
 import Link from "next/link";
 import NetworkDropdown from "../NetworkDropdown";
@@ -21,7 +20,6 @@ const Header = () => {
                     </div>
                     <div className="flex items-center space-x-4">
                         <NetworkDropdown />
-                        <Account />
                     </div>
                 </div>
             </div>

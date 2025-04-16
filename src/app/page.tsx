@@ -13,12 +13,14 @@ import { Address } from "viem";
 import DonateForm from "@/components/DonateForm";
 import TransactionsTable from "@/components/TransactionsTable";
 import { Leaderboard } from "@/components/Leaderboard";
+import { useNetworksStore } from "@/lib/store/networksStore";
 
 export default function Home() {
     const { account } = useConnection();
     const { balance, cooldownDuration, dropAmount } = useFaucetInfo(
         account as Address | undefined
     );
+    const { selectedNetwork } = useNetworksStore();
     return (
         <div className="min-h-screen flex flex-col">
             <Header />
@@ -54,6 +56,7 @@ export default function Home() {
                                     cooldownPeriod={
                                         cooldownDuration ?? undefined
                                     }
+                                    networkId={selectedNetwork?.chainId}
                                 />
                             </TabsContent>
                             <TabsContent value="donate" className="mt-6">

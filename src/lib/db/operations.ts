@@ -39,22 +39,49 @@ export async function updateRateLimit(
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    await RateLimit.findOneAndUpdate(
-        {
-            walletAddress: address,
-            ipAddress,
-            networkId,
-            lastRequestAt: { $gte: oneDayAgo },
-        },
-        {
-            $set: {
-                lastRequestAt: now,
-                requestCount: 1,
-                intervalStart: now,
+    try {
+        // First try to update an existing record
+        const result = await RateLimit.findOneAndUpdate(
+            {
+                walletAddress: address,
+                ipAddress,
+                networkId,
+                lastRequestAt: { $gte: oneDayAgo },
             },
-        },
-        { upsert: true, new: true, session: session || null }
-    );
+            {
+                $set: {
+                    lastRequestAt: now,
+                },
+                $inc: {
+                    requestCount: 1,
+                },
+            },
+            { new: true, session: session || null }
+        );
+
+        // If no existing record was found, create a new one
+        if (!result) {
+            await RateLimit.create(
+                [
+                    {
+                        walletAddress: address,
+                        ipAddress,
+                        networkId,
+                        lastRequestAt: now,
+                        requestCount: 1,
+                        intervalStart: now,
+                    },
+                ],
+                { session: session || null }
+            );
+        }
+    } catch (error) {
+        // If we get a duplicate key error, it means another request created the record
+        // between our check and create. This is fine, we can ignore it.
+        if (error instanceof Error && "code" in error && error.code !== 11000) {
+            throw error;
+        }
+    }
 }
 
 export async function checkUserExists(

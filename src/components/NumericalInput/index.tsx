@@ -9,6 +9,7 @@ type INumericalInput = {
     className?: string;
     placeholder?: string;
     integerOnly?: boolean;
+    disabled?: boolean;
 };
 
 const inputRegex = RegExp(`^\\d*$`); // match only digits
@@ -21,6 +22,7 @@ const NumericalInput: React.FC<INumericalInput> = ({
     className = "",
     placeholder,
     integerOnly = false,
+    disabled = false,
 }) => {
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const input = e.target.value;
@@ -77,6 +79,7 @@ const NumericalInput: React.FC<INumericalInput> = ({
             placeholder={placeholder}
             onChange={handleChange}
             onKeyUp={handleKeyUp}
+            disabled={disabled}
             className={twMerge(
                 "text-base px-4",
                 isError && "border-destructive focus-visible:ring-destructive",

@@ -1,31 +1,23 @@
 import { LogOut } from "lucide-react";
 import Image from "next/image";
-
-import useCopyClipboard from "@/hooks/useCopyClipboard";
 import { useConnection } from "@/providers/ConnectionProvider";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { AlertCircle, CheckCheck, Copy, ExternalLink } from "lucide-react";
 import { Button } from "../ui/button";
-import { getCachedNetwork } from "@/lib/networks/cache";
-import { isSupportedChain } from "@/lib/networks";
 
 export const ConnectedAccount = () => {
-    const { account, chainId, connectedProvider, handleDisconnect } =
-        useConnection();
-    const [copied, copy] = useCopyClipboard();
+    const { account, connectedProvider, handleDisconnect } = useConnection();
 
     const shortenedAddress = account
         ? `${account.slice(0, 6)}...${account.slice(-4)}`
         : "";
 
-    const explorerUrl = chainId
-        ? getCachedNetwork(chainId)?.explorers[0]?.url
-        : "";
-
     return (
         <Popover>
             <PopoverTrigger asChild>
-                <Button variant="outline" className="gap-2 cursor-pointer">
+                <Button
+                    variant="outline"
+                    className="bg-rose-50 hover:bg-rose-100 border-rose-200 text-rose-600 gap-2 cursor-pointer"
+                >
                     <Image
                         src={connectedProvider?.info.icon || ""}
                         alt={connectedProvider?.info.name || ""}
@@ -34,61 +26,25 @@ export const ConnectedAccount = () => {
                         className="w-5 h-5 rounded"
                     />
                     <span>{shortenedAddress}</span>
-                    {!isSupportedChain(chainId) && (
-                        <AlertCircle className="w-4 h-4 text-destructive" />
-                    )}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-60" align="end" sideOffset={5}>
+            <PopoverContent className="w-64" align="end" sideOffset={5}>
                 <div className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Image
-                                src={connectedProvider?.info.icon || ""}
-                                alt={connectedProvider?.info.name || ""}
-                                width={24}
-                                height={24}
-                                className="w-6 h-6 rounded"
-                            />
-                            <span className="font-medium">
-                                {connectedProvider?.info.name}
-                            </span>
-                        </div>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => copy(account || "")}
-                            className="h-8 w-8"
-                        >
-                            {copied ? (
-                                <CheckCheck className="h-4 w-4" />
-                            ) : (
-                                <Copy className="h-4 w-4" />
-                            )}
-                        </Button>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">
-                            {shortenedAddress}
+                    <div className="flex items-center gap-2">
+                        <Image
+                            src={connectedProvider?.info.icon || ""}
+                            alt={connectedProvider?.info.name || ""}
+                            width={24}
+                            height={24}
+                            className="w-6 h-6 rounded"
+                        />
+                        <span className="font-medium">
+                            {connectedProvider?.info.name}
                         </span>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 gap-2"
-                            onClick={() =>
-                                window.open(
-                                    `${explorerUrl}/address/${account}`,
-                                    "_blank"
-                                )
-                            }
-                        >
-                            <ExternalLink className="h-4 w-4" />
-                            View
-                        </Button>
                     </div>
                     <Button
-                        variant="destructive"
-                        className="w-full"
+                        variant="outline"
+                        className="w-full border-rose-200 hover:bg-rose-50 hover:text-rose-600"
                         onClick={handleDisconnect}
                     >
                         <LogOut className="h-4 w-4 mr-2" />

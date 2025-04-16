@@ -1,5 +1,6 @@
 import { connectDB } from "./mongodb";
 import mongoose from "mongoose";
+import { ClientSession } from "mongodb";
 
 export async function withDB<T>(fn: () => Promise<T>): Promise<T> {
     await connectDB();
@@ -7,20 +8,49 @@ export async function withDB<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 export async function withTransaction<T>(
-    fn: (session: mongoose.ClientSession) => Promise<T>
+    operation: (session: ClientSession) => Promise<T>
 ): Promise<T> {
     await connectDB();
     const session = await mongoose.startSession();
-    session.startTransaction();
 
     try {
-        const result = await fn(session);
-        await session.commitTransaction();
+        session.startTransaction({
+            readConcern: { level: "local" },
+            writeConcern: { w: "majority" },
+            readPreference: "primary",
+            maxCommitTimeMS: 30000, // 30 seconds
+        });
+
+        const result = await operation(session);
+
+        try {
+            await session.commitTransaction();
+        } catch (commitError) {
+            // If commit fails, try to abort
+            try {
+                await session.abortTransaction();
+            } catch (abortError) {
+                console.error("Failed to abort transaction:", abortError);
+            }
+            throw commitError;
+        }
+
         return result;
     } catch (error) {
-        await session.abortTransaction();
+        // If the error is not a transaction error, try to abort
+        if (
+            !(error instanceof Error && "code" in error && error.code === 251)
+        ) {
+            try {
+                if (session.inTransaction()) {
+                    await session.abortTransaction();
+                }
+            } catch (abortError) {
+                console.error("Failed to abort transaction:", abortError);
+            }
+        }
         throw error;
     } finally {
-        session.endSession();
+        await session.endSession();
     }
 }

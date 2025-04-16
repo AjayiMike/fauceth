@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
                 return error("No working RPCs found", 503);
             }
 
-            // Get fauce's ETH balance
+            // Get faucet's ETH balance
             const balance = await getETHBalance(
                 process.env.NEXT_PUBLIC_FAUCET_ADDRESS as Address,
                 workingRPCs
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
                 getOrCreateIpAddress(ipAddress, session),
             ]);
 
-            // Send ETH
+            // Send ETH - keeping this inside the transaction as requested
             const txHash = await sendETH(
                 checkSummedAddress,
                 parseEther(claimAmount.toString()),
