@@ -74,6 +74,9 @@ importers:
       react:
         specifier: ^19.0.0
         version: 19.1.0
+      react-blockies:
+        specifier: ^1.4.1
+        version: 1.4.1(react@19.1.0)
       react-dom:
         specifier: ^19.0.0
         version: 19.1.0(react@19.1.0)
@@ -111,6 +114,9 @@ importers:
       '@types/react':
         specifier: ^19
         version: 19.0.12
+      '@types/react-blockies':
+        specifier: ^1.4.4
+        version: 1.4.4
       '@types/react-dom':
         specifier: ^19
         version: 19.0.4(@types/react@19.0.12)
@@ -1086,6 +1092,9 @@ packages:
 
   '@types/numeral@2.0.5':
     resolution: {integrity: sha512-kH8I7OSSwQu9DS9JYdFWbuvhVzvFRoCPCkGxNwoGgaPeDfEPJlcxNvEOypZhQ3XXHsGbfIuYcxcJxKUfJHnRfw==}
+
+  '@types/react-blockies@1.4.4':
+    resolution: {integrity: sha512-7QfFeT1y/izwP/Wxmnl9Ii73udFQIBsfI/IvG+841sPxqc7Pf79ZDZP3XQsmYzAjDXdoZXquLgI/Q/tmAZwB0w==}
 
   '@types/react-dom@19.0.4':
     resolution: {integrity: sha512-4fSQ8vWFkg+TGhePfUzVmat3eC14TXYSsiiDSLI0dVLsrm9gZFABjPy/Qu6TKgl1tq1Bu1yDsuQgY3A3DOjCcg==}
@@ -2244,6 +2253,11 @@ packages:
 
   queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
+
+  react-blockies@1.4.1:
+    resolution: {integrity: sha512-4N015X5oPNnD3xQPsiqolOFzPZSSWyc5mJhJUZShUCHtiGUxVN+1qsWTcglkHMNySux9hUofaispqcw9QkWP5Q==}
+    peerDependencies:
+      react: '>=15.0.0'
 
   react-dom@19.1.0:
     resolution: {integrity: sha512-Xs1hdnE+DyKgeHJeJznQmYMIBG3TKIHJJT95Q58nHLSrElKlGQqDTR2HQ9fx5CN/Gk6Vh/kupBTDLU11/nDk/g==}
@@ -3504,6 +3518,10 @@ snapshots:
       undici-types: 6.19.8
 
   '@types/numeral@2.0.5': {}
+
+  '@types/react-blockies@1.4.4':
+    dependencies:
+      '@types/react': 19.0.12
 
   '@types/react-dom@19.0.4(@types/react@19.0.12)':
     dependencies:
@@ -4825,6 +4843,11 @@ snapshots:
   punycode@2.3.1: {}
 
   queue-microtask@1.2.3: {}
+
+  react-blockies@1.4.1(react@19.1.0):
+    dependencies:
+      prop-types: 15.8.1
+      react: 19.1.0
 
   react-dom@19.1.0(react@19.1.0):
     dependencies:

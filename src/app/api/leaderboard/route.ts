@@ -35,13 +35,13 @@ export async function GET(req: NextRequest) {
             let dateFilter = {};
 
             switch (period) {
-                case "weekly":
+                case "week":
                     const weekAgo = new Date();
                     weekAgo.setDate(weekAgo.getDate() - 7);
                     weekAgo.setHours(0, 0, 0, 0);
                     dateFilter = { createdAt: { $gte: weekAgo } };
                     break;
-                case "monthly":
+                case "month":
                     const monthAgo = new Date();
                     monthAgo.setDate(monthAgo.getDate() - 30);
                     monthAgo.setHours(0, 0, 0, 0);

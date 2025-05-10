@@ -1,0 +1,73 @@
+/* Custom Toast Styles */
+[data-sonner-toaster][data-theme="light"] {
+    --normal-bg: #ffffff;
+    --normal-border: #e2e8f0;
+    --normal-text: #1e293b;
+
+    --success-bg: #ecfdf5;
+    --success-border: #a7f3d0;
+    --success-text: #047857;
+
+    --error-bg: #fef2f2;
+    --error-border: #fecaca;
+    --error-text: #b91c1c;
+
+    --info-bg: #eff6ff;
+    --info-border: #bfdbfe;
+    --info-text: #1d4ed8;
+}
+
+/* Toast Container */
+.toast-container [data-sonner-toast] {
+    padding: 16px !important;
+    border-width: 1px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    font-weight: 500 !important;
+    width: 100% !important;
+    max-width: 360px !important;
+    align-items: flex-start !important;
+}
+
+/* Success Toast */
+.toast-container [data-sonner-toast][data-type="success"] {
+    border-left: 4px solid #10b981 !important;
+}
+
+/* Error Toast */
+.toast-container [data-sonner-toast][data-type="error"] {
+    border-left: 4px solid #ef4444 !important;
+}
+
+/* Info Toast */
+.toast-container [data-sonner-toast][data-type="info"] {
+    border-left: 4px solid #3b82f6 !important;
+}
+
+/* Plain Toast */
+.toast-container
+    [data-sonner-toast]:not([data-type="success"]):not([data-type="error"]):not(
+        [data-type="info"]
+    ) {
+    border-left: 4px solid #94a3b8 !important;
+}
+
+/* Toast Title */
+.toast-container [data-sonner-toast] [data-title] {
+    font-weight: 600 !important;
+    margin-bottom: 4px !important;
+}
+
+/* Toast Description */
+.toast-container [data-sonner-toast] [data-description] {
+    font-weight: 400 !important;
+    font-size: 0.9rem !important;
+}
+
+/* Toast Action Button */
+.toast-container [data-sonner-toast] [data-button] {
+    border-radius: 6px !important;
+    padding: 6px 12px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+}

@@ -22,6 +22,7 @@ import { parseEther } from "viem";
 import { sepolia } from "viem/chains";
 import { getPassportScore } from "@/lib/passport";
 import { verifyHCaptcha } from "@/lib/captcha/hCaptcha";
+import { formatDistanceToNow } from "date-fns";
 
 const requestBodySchema = z.object({
     networkId: z.number().int().positive(),
@@ -78,7 +79,10 @@ export async function POST(req: NextRequest) {
 
             if (!rateLimit.canRequest && rateLimit.nextAvailableAt) {
                 return error(
-                    `Rate limit exceeded. Try again after ${rateLimit.nextAvailableAt.toISOString()}`,
+                    `Rate limit exceeded. Try again in ${formatDistanceToNow(
+                        rateLimit.nextAvailableAt,
+                        { addSuffix: false }
+                    )}`,
                     429
                 );
             }
