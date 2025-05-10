@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/// <reference types="vite/client" />
 
 /**
  * Represents the assets needed to display and identify a wallet.

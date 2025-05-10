@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQueries } from "@tanstack/react-query";
 import { getETHBalance } from "@/lib/networks";
 import { INetwork } from "@/types/network";
 import { useEffect, useMemo } from "react";
@@ -68,11 +68,9 @@ export const useNetworkBalances = (networks: INetwork[]) => {
         return map;
     }, [networks]);
 
-    // Create an array of queries for all networks
-    const networkQueries = networks.map((network, index) => {
-        // This is a workaround to avoid calling useQuery in a loop
-        // We're using a fixed array of queries based on the networks array
-        return useQuery({
+    // Use useQueries hook instead of mapping useQuery calls
+    const networkQueries = useQueries({
+        queries: networks.map((network) => ({
             queryKey: ["networkBalance", network.chainId],
             queryFn: async () => {
                 return await getETHBalance(
@@ -83,13 +81,13 @@ export const useNetworkBalances = (networks: INetwork[]) => {
             },
             staleTime: Infinity, // Never consider data stale
             gcTime: 24 * 60 * 60 * 1000, // Keep in cache for 24 hours
-            refetchInterval: false, // Never automatically refetch
+            refetchInterval: false as const, // Never automatically refetch
             refetchOnWindowFocus: false, // Don't refetch when window regains focus
             refetchOnMount: false, // Don't refetch on component mount if data exists
             refetchOnReconnect: false, // Don't refetch on reconnect
             retry: 1, // Only retry once on failure
-            enabled: !!networks.length, // Only run query if networks are available
-        });
+            enabled: networks.length > 0, // Only run query if networks are available
+        })),
     });
 
     // Return a function to get a network's balance
