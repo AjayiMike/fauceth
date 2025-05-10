@@ -3,6 +3,7 @@ import { twMerge } from "tailwind-merge";
 import { Input } from "../ui/input";
 
 type INumericalInput = {
+    id?: string;
     value?: string;
     isError?: boolean;
     onUserInput: (value: string) => void;
@@ -10,12 +11,15 @@ type INumericalInput = {
     placeholder?: string;
     integerOnly?: boolean;
     disabled?: boolean;
+    "aria-invalid"?: boolean;
+    "aria-describedby"?: string;
 };
 
 const inputRegex = RegExp(`^\\d*$`); // match only digits
 const decimalRegex = RegExp(`^\\d*\\.?\\d*$`); // match digits with optional decimal point
 
 const NumericalInput: React.FC<INumericalInput> = ({
+    id,
     value = "",
     isError,
     onUserInput,
@@ -23,6 +27,8 @@ const NumericalInput: React.FC<INumericalInput> = ({
     placeholder,
     integerOnly = false,
     disabled = false,
+    "aria-invalid": ariaInvalid,
+    "aria-describedby": ariaDescribedby,
 }) => {
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const input = e.target.value;
@@ -64,6 +70,7 @@ const NumericalInput: React.FC<INumericalInput> = ({
 
     return (
         <Input
+            id={id}
             // universal input options
             inputMode="decimal"
             autoComplete="off"
@@ -80,6 +87,8 @@ const NumericalInput: React.FC<INumericalInput> = ({
             onChange={handleChange}
             onKeyUp={handleKeyUp}
             disabled={disabled}
+            aria-invalid={ariaInvalid}
+            aria-describedby={ariaDescribedby}
             className={twMerge(
                 "text-base px-4",
                 isError && "border-destructive focus-visible:ring-destructive",

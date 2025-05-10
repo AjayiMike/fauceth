@@ -1,9 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Heart, Info, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { Heart, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Alert, AlertDescription } from "../ui/alert";
 import NumericalInput from "../NumericalInput";
 import { useState, useEffect } from "react";
 import useBalance from "@/hooks/useBalance";
@@ -14,7 +14,6 @@ import { useConnection } from "@/providers/ConnectionProvider";
 import { displayNumber } from "@/lib/utils/formatting";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { useNetworksStore } from "@/lib/store/networksStore";
-import { Badge } from "@/components/ui/badge";
 import Account from "../Account";
 import {
     Dialog,
@@ -30,8 +29,7 @@ import { Input } from "@/components/ui/input";
 type DonationStep = "confirm" | "pending" | "success" | "socials";
 
 const DonateForm = () => {
-    const { isConnected, chainId, account, handleSwitchChain } =
-        useConnection();
+    const { isConnected, chainId, account } = useConnection();
     const { balance, formattedBalance, isLoading } = useBalance();
     const { networks, selectedNetwork } = useNetworksStore();
     const donate = useDonate();
@@ -289,10 +287,14 @@ const DonateForm = () => {
                         <div className="py-4 space-y-4">
                             <div className="space-y-4">
                                 <div className="grid gap-2">
-                                    <label className="text-sm font-medium">
+                                    <label
+                                        htmlFor="xLinkInput"
+                                        className="text-sm font-medium"
+                                    >
                                         X (Twitter)
                                     </label>
                                     <Input
+                                        id="xLinkInput"
                                         placeholder="x username"
                                         value={socialLinks.x}
                                         onChange={(e) =>
@@ -304,10 +306,14 @@ const DonateForm = () => {
                                     />
                                 </div>
                                 <div className="grid gap-2">
-                                    <label className="text-sm font-medium">
+                                    <label
+                                        htmlFor="githubLinkInput"
+                                        className="text-sm font-medium"
+                                    >
                                         GitHub
                                     </label>
                                     <Input
+                                        id="githubLinkInput"
                                         placeholder="github username"
                                         value={socialLinks.github}
                                         onChange={(e) =>
@@ -319,10 +325,14 @@ const DonateForm = () => {
                                     />
                                 </div>
                                 <div className="grid gap-2">
-                                    <label className="text-sm font-medium">
+                                    <label
+                                        htmlFor="farcasterLinkInput"
+                                        className="text-sm font-medium"
+                                    >
                                         Farcaster
                                     </label>
                                     <Input
+                                        id="farcasterLinkInput"
                                         placeholder="farcaster username"
                                         value={socialLinks.farcaster}
                                         onChange={(e) =>
@@ -362,7 +372,10 @@ const DonateForm = () => {
                         </DialogHeader>
                         <div className="py-6 flex flex-col items-center justify-center space-y-4">
                             <div className="h-12 w-12 rounded-full bg-rose-100 flex items-center justify-center">
-                                <CheckCircle2 className="h-6 w-6 text-rose-500" />
+                                <CheckCircle2
+                                    className="h-6 w-6 text-rose-500"
+                                    aria-hidden="true"
+                                />
                             </div>
                             <div className="text-center space-y-2">
                                 <p className="text-sm font-medium">
@@ -397,112 +410,96 @@ const DonateForm = () => {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <div className="flex items-center space-x-2">
-                            <Heart className="w-5 h-5 text-rose-500" />
+                            <Heart
+                                className="w-5 h-5 text-rose-500"
+                                aria-hidden="true"
+                            />
                             <h3 className="font-semibold text-lg">
                                 Support the Community
                             </h3>
                         </div>
                         <Account />
                     </CardHeader>
-                    <CardContent>
-                        <div className="space-y-6">
-                            {isConnected && !isUnsupportedChain && (
-                                <Alert className="bg-rose-500/10 text-rose-600 border-rose-200">
-                                    <Info className="h-5 w-5 mt-0.5" />
-                                    <AlertTitle>Support the Faucet</AlertTitle>
-                                    <AlertDescription className="text-rose-600/80">
-                                        Your donations help keep this faucet
-                                        running. Any amount of ETH is
-                                        appreciated.
-                                    </AlertDescription>
-                                </Alert>
-                            )}
-                            {isConnected && (
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm text-muted-foreground">
-                                            Network:
-                                        </span>
-                                        {isUnsupportedChain ? (
-                                            <Badge
-                                                variant="destructive"
-                                                className="font-normal"
-                                            >
-                                                <AlertCircle className="w-3 h-3 mr-1" />
-                                                Unsupported Network
-                                            </Badge>
-                                        ) : (
-                                            <Badge
-                                                variant="outline"
-                                                className="bg-rose-50 text-rose-600 border-rose-200 font-normal"
-                                            >
-                                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                                {currentNetwork?.name}
-                                            </Badge>
-                                        )}
-                                    </div>
-                                    {isUnsupportedChain && targetNetwork && (
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="border-rose-200 hover:bg-rose-50 hover:text-rose-600"
-                                            onClick={() =>
-                                                handleSwitchChain(
-                                                    targetNetwork.chainId
-                                                )
-                                            }
-                                        >
-                                            Switch to {targetNetwork.name}
-                                        </Button>
-                                    )}
-                                </div>
-                            )}
-
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <div className="relative">
-                                        <div className="text-sm text-muted-foreground mb-2 flex items-center justify-between">
-                                            <span>Enter donation amount</span>
-                                            <span>
-                                                Balance:{" "}
-                                                {displayNumber(
-                                                    formattedBalance,
-                                                    3
-                                                )}{" "}
-                                                ETH
-                                            </span>
-                                        </div>
-                                        <NumericalInput
-                                            value={amount}
-                                            onUserInput={(value) => {
-                                                setAmount(value);
-                                            }}
-                                            placeholder="Enter amount to donate"
-                                            isError={isError}
-                                            disabled={Boolean(
-                                                !isConnected ||
-                                                    isUnsupportedChain
-                                            )}
-                                        />
-                                    </div>
-                                </div>
-
-                                <Button
-                                    className="w-full h-12 text-base font-medium bg-rose-500 hover:bg-rose-600"
-                                    size="lg"
-                                    disabled={Boolean(
-                                        isError ||
-                                            isLoading ||
-                                            !Boolean(amount) ||
-                                            !isConnected ||
-                                            isUnsupportedChain
-                                    )}
-                                    onClick={handleDonateClick}
+                    <CardContent className="pt-4">
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label
+                                    htmlFor="donateAmountInput"
+                                    className="block text-sm font-medium text-muted-foreground"
                                 >
-                                    Donate
-                                    <Heart className="w-5 h-5 ml-2" />
-                                </Button>
+                                    Amount (ETH)
+                                </label>
+                                <NumericalInput
+                                    id="donateAmountInput"
+                                    placeholder="0.0"
+                                    value={amount}
+                                    onUserInput={setAmount}
+                                    isError={isError}
+                                    disabled={!isConnected || isLoading}
+                                    aria-invalid={isError}
+                                    aria-describedby={
+                                        isError
+                                            ? "donateAmountError"
+                                            : undefined
+                                    }
+                                />
+                                {isError && (
+                                    <p
+                                        id="donateAmountError"
+                                        className="text-xs text-destructive mt-1"
+                                    >
+                                        Insufficient balance. You have{" "}
+                                        {formattedBalance} ETH.
+                                    </p>
+                                )}
+                                {!isConnected && (
+                                    <Alert
+                                        variant="destructive"
+                                        className="bg-yellow-500/10 text-yellow-700 border-yellow-300"
+                                    >
+                                        <AlertCircle
+                                            className="h-4 w-4"
+                                            aria-hidden="true"
+                                        />
+                                        <AlertDescription className="text-yellow-700/90">
+                                            Please connect your wallet to
+                                            donate.
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                                {isUnsupportedChain && (
+                                    <Alert
+                                        variant="destructive"
+                                        className="bg-red-500/10 text-red-600 border-red-300"
+                                    >
+                                        <AlertCircle
+                                            className="h-4 w-4"
+                                            aria-hidden="true"
+                                        />
+                                        <AlertDescription className="text-red-600/80">
+                                            Unsupported network. Please switch
+                                            to a supported network like{" "}
+                                            {targetNetwork?.name || "Sepolia"}.
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
                             </div>
+
+                            <Button
+                                className="w-full h-12 text-base font-medium bg-rose-500 hover:bg-rose-600"
+                                size="lg"
+                                disabled={Boolean(
+                                    isError ||
+                                        isLoading ||
+                                        !Boolean(amount) ||
+                                        !isConnected ||
+                                        isUnsupportedChain
+                                )}
+                                onClick={handleDonateClick}
+                            >
+                                Donate
+                                <Heart className="w-5 h-5 ml-2" />
+                            </Button>
                         </div>
                     </CardContent>
                 </Card>

@@ -44,7 +44,10 @@ const RequestForm = ({
         if (isZeroBalance) {
             return (
                 <Alert className="bg-blue-500/10 text-blue-600 border-blue-200">
-                    <AlertCircle className="h-5 w-5 mt-0.5" />
+                    <AlertCircle
+                        className="h-5 w-5 mt-0.5"
+                        aria-hidden="true"
+                    />
                     <AlertDescription className="text-blue-600/80">
                         The faucet is currently empty. Please try again later or
                         consider donating to help keep the faucet running.
@@ -56,7 +59,10 @@ const RequestForm = ({
         if (isLowBalance) {
             return (
                 <Alert className="bg-blue-500/10 text-blue-600 border-blue-200">
-                    <AlertTriangle className="h-5 w-5 mt-0.5" />
+                    <AlertTriangle
+                        className="h-5 w-5 mt-0.5"
+                        aria-hidden="true"
+                    />
                     <AlertDescription className="text-blue-600/80">
                         The faucet balance is running low ({formattedBalance}{" "}
                         ETH). You can still request{" "}
@@ -70,7 +76,7 @@ const RequestForm = ({
 
         return (
             <Alert className="bg-blue-500/10 text-blue-600 border-blue-200">
-                <Info className="h-5 w-5 mt-0.5" />
+                <Info className="h-5 w-5 mt-0.5" aria-hidden="true" />
                 <AlertDescription className="text-blue-600/80">
                     You can request {displayNumber(faucetAmount || 0, 3)} ETH
                     every {formatDuration(cooldownPeriod || 0)}. Make sure to
@@ -172,10 +178,14 @@ const RequestForm = ({
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <div className="relative">
-                                    <div className="text-sm text-muted-foreground mb-2">
+                                    <label
+                                        htmlFor="ethAddressInput"
+                                        className="text-sm text-muted-foreground mb-2 block"
+                                    >
                                         Enter your Ethereum address
-                                    </div>
+                                    </label>
                                     <Input
+                                        id="ethAddressInput"
                                         placeholder="0x..."
                                         value={address}
                                         onChange={(e) =>
@@ -187,9 +197,18 @@ const RequestForm = ({
                                                 : ""
                                         }
                                         disabled={isLoading}
+                                        aria-invalid={!!addressError}
+                                        aria-describedby={
+                                            addressError
+                                                ? "addressErrorText"
+                                                : undefined
+                                        }
                                     />
                                     {addressError && (
-                                        <p className="text-xs text-destructive mt-1 px-1">
+                                        <p
+                                            id="addressErrorText"
+                                            className="text-xs text-destructive mt-1 px-1"
+                                        >
                                             {addressError}
                                         </p>
                                     )}
@@ -222,13 +241,19 @@ const RequestForm = ({
                             >
                                 {isLoading ? (
                                     <>
-                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                        <Loader2
+                                            className="w-5 h-5 mr-2 animate-spin"
+                                            aria-hidden="true"
+                                        />
                                         Processing...
                                     </>
                                 ) : (
                                     <>
                                         Request Tokens
-                                        <ArrowRight className="w-5 h-5 ml-2" />
+                                        <ArrowRight
+                                            className="w-5 h-5 ml-2"
+                                            aria-hidden="true"
+                                        />
                                     </>
                                 )}
                             </Button>

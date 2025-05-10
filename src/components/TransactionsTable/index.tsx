@@ -76,7 +76,10 @@ const TransactionsTable = () => {
                 <TableRow>
                     <TableCell colSpan={3} className="text-center py-8">
                         <div className="flex items-center justify-center">
-                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            <Loader2
+                                className="h-6 w-6 animate-spin text-muted-foreground"
+                                aria-hidden="true"
+                            />
                         </div>
                     </TableCell>
                 </TableRow>
@@ -138,7 +141,10 @@ const TransactionsTable = () => {
     return (
         <div className="rounded-xl border bg-card overflow-hidden">
             <div className="p-6 flex items-center gap-3 border-b">
-                <History className="h-5 w-5 text-muted-foreground" />
+                <History
+                    className="h-5 w-5 text-muted-foreground"
+                    aria-hidden="true"
+                />
                 <h2 className="font-semibold">Recent Transactions</h2>
             </div>
             <Tabs
@@ -154,14 +160,20 @@ const TransactionsTable = () => {
                             value="requests"
                             className="inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-blue-600 data-[state=active]:shadow hover:text-blue-600"
                         >
-                            <ArrowDownUp className="w-4 h-4 mr-2" />
+                            <ArrowDownUp
+                                className="w-4 h-4 mr-2"
+                                aria-hidden="true"
+                            />
                             Requests
                         </TabsTrigger>
                         <TabsTrigger
                             value="donations"
                             className="inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-rose-600 data-[state=active]:shadow hover:text-rose-600"
                         >
-                            <Wallet className="w-4 h-4 mr-2" />
+                            <Wallet
+                                className="w-4 h-4 mr-2"
+                                aria-hidden="true"
+                            />
                             Donations
                         </TabsTrigger>
                     </TabsList>
@@ -171,11 +183,14 @@ const TransactionsTable = () => {
                         <Table>
                             <TableHeader>
                                 <TableRow className="hover:bg-transparent">
-                                    <TableHead className="w-[40%]">
+                                    <TableHead scope="col" className="w-[40%]">
                                         Address
                                     </TableHead>
-                                    <TableHead>Amount</TableHead>
-                                    <TableHead className="text-right">
+                                    <TableHead scope="col">Amount</TableHead>
+                                    <TableHead
+                                        scope="col"
+                                        className="text-right"
+                                    >
                                         Time
                                     </TableHead>
                                 </TableRow>
@@ -191,11 +206,14 @@ const TransactionsTable = () => {
                         <Table>
                             <TableHeader>
                                 <TableRow className="hover:bg-transparent">
-                                    <TableHead className="w-[40%]">
+                                    <TableHead scope="col" className="w-[40%]">
                                         Address
                                     </TableHead>
-                                    <TableHead>Amount</TableHead>
-                                    <TableHead className="text-right">
+                                    <TableHead scope="col">Amount</TableHead>
+                                    <TableHead
+                                        scope="col"
+                                        className="text-right"
+                                    >
                                         Time
                                     </TableHead>
                                 </TableRow>

@@ -70,28 +70,28 @@ const FaucetInfo: FC<{
     }
 
     return (
-        <div className="max-w-2xl mx-auto">
-            <div className="flex flex-wrap gap-4 items-center">
+        <div className="max-w-6xl mx-auto">
+            <dl className="flex flex-wrap gap-4 items-center">
                 {items.map((item, index) => (
                     <motion.div
                         key={item.title}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2, delay: index * 0.1 }}
-                        className="flex items-center gap-3 px-4 py-2 rounded-full"
+                        className="flex items-center gap-3 py-2 rounded-full"
                     >
                         <div className={`p-2 rounded-full ${item.color}`}>
-                            <item.icon className="h-4 w-4" />
+                            <item.icon className="h-4 w-4" aria-hidden="true" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-xs text-muted-foreground">
+                            <dt className="text-xs text-muted-foreground">
                                 {item.title}
-                            </span>
-                            <span className="font-medium">{item.value}</span>
+                            </dt>
+                            <dd className="font-medium">{item.value}</dd>
                         </div>
                     </motion.div>
                 ))}
-            </div>
+            </dl>
         </div>
     );
 };

@@ -11,7 +11,7 @@ const Header = () => {
                         <Link href="/" className="cursor-pointer">
                             <Image
                                 src="/fauceth.svg"
-                                alt="logo"
+                                alt="FaucETH logo"
                                 width={32}
                                 height={32}
                                 className="w-8 h-8"
