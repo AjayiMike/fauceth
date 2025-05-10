@@ -10,7 +10,7 @@ import {
     http,
 } from "viem";
 
-const useETHBalance = (_account?: string) => {
+const useBalance = (_account?: string) => {
     const { account, chainId } = useConnection();
     const { networks } = useNetworksStore();
     const targetAccount = account || _account;
@@ -35,14 +35,14 @@ const useETHBalance = (_account?: string) => {
         transport: transport,
     });
     const { data: balance, isLoading } = useQuery({
-        queryKey: ["ETHBalance", targetAccount],
+        queryKey: ["ETHBalance", targetAccount, chainId, network?.rpc],
         queryFn: async () => {
             if (!targetAccount) return BigInt(0);
             return publicClient.getBalance({
                 address: targetAccount as Address,
             });
         },
-        enabled: !!targetAccount,
+        enabled: !!targetAccount && !!network?.rpc?.length,
         refetchInterval: 4000,
     });
 
@@ -53,4 +53,4 @@ const useETHBalance = (_account?: string) => {
     };
 };
 
-export default useETHBalance;
+export default useBalance;

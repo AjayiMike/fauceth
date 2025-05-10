@@ -21,6 +21,7 @@ import { withTransaction } from "@/lib/db/with-db";
 import { parseEther } from "viem";
 import { sepolia } from "viem/chains";
 import { getPassportScore } from "@/lib/passport";
+import { verifyHCaptcha } from "@/lib/captcha/hCaptcha";
 
 const requestBodySchema = z.object({
     networkId: z.number().int().positive(),
@@ -48,6 +49,23 @@ export async function POST(req: NextRequest) {
             : process.env.NODE_ENV === "development"
             ? "127.0.0.1" // Use localhost for development
             : "unknown";
+
+        const captchaToken = req.headers.get("captcha-token");
+
+        if (!captchaToken) {
+            return error("hCaptcha token not found", 403);
+        }
+
+        const hCaptchaResponse = await verifyHCaptcha(
+            captchaToken,
+            process.env.HCAPTCHA_SECRET as string,
+            process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY as string,
+            ipAddress
+        );
+
+        if (!hCaptchaResponse.success) {
+            return error("hCaptcha verification failed", 403);
+        }
 
         return await withTransaction(async (session) => {
             // Check rate limit

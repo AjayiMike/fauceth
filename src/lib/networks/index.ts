@@ -3,6 +3,7 @@ import { retry } from "../retry";
 import {
     Address,
     createPublicClient,
+    defineChain,
     fallback,
     formatUnits,
     getAddress,
@@ -387,4 +388,49 @@ export const getNetworkInfo = async (chainId: number): Promise<INetwork> => {
         );
         throw error; // Re-throw the original error to preserve the message
     }
+};
+
+export const networkInfoToViemChain = (network: INetwork) => {
+    return defineChain({
+        id: network.chainId,
+        name: network.name,
+        nativeCurrency: network.nativeCurrency,
+        rpcUrls: {
+            default: {
+                http: network.rpc,
+            },
+        },
+        blockExplorers:
+            network.explorers.length > 0
+                ? {
+                      default: {
+                          name: network.explorers[0].name,
+                          url: network.explorers[0].url,
+                      },
+                  }
+                : undefined,
+        testnet: true,
+    });
+};
+
+export const getNetworkPublicClient = (network: INetwork) => {
+    const transport = fallback(
+        network?.rpc ? network.rpc.map((url) => http(url)) : []
+    );
+
+    return createPublicClient({
+        chain: defineChain({
+            id: network?.chainId,
+            name: network?.name,
+            rpcUrls: {
+                default: { http: network.rpc },
+            },
+            nativeCurrency: {
+                name: network?.nativeCurrency.name,
+                symbol: network?.nativeCurrency.symbol,
+                decimals: network?.nativeCurrency.decimals,
+            },
+        }),
+        transport: transport,
+    });
 };

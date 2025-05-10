@@ -16,7 +16,7 @@ const WalletButton: React.FC<{
                 width={20}
                 height={20}
                 className="w-5 h-5 rounded cursor-pointer"
-                src={walletDetails.info.icon}
+                src={walletDetails.info.icon.trim()}
                 alt={walletDetails.info.name}
             />
             <span>{walletDetails.info.name}</span>

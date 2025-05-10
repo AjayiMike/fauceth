@@ -5,9 +5,9 @@ import { getAddress } from "viem";
 import { User } from "@/lib/db/models/user";
 
 const socialLinksSchema = z.object({
-    twitter: z.string().optional(),
+    x: z.string().optional(),
     github: z.string().optional(),
-    linkedin: z.string().optional(),
+    farcaster: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -20,6 +20,8 @@ export async function POST(req: NextRequest) {
                 ...socialLinksSchema.shape,
             }).parse
         );
+
+        console.log("Links:", links);
 
         const user = await User.findOneAndUpdate(
             { address: getAddress(address) },

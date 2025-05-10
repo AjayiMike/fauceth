@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useConnection } from "@/providers/ConnectionProvider";
 import { useCallback, useState } from "react";
 import { ChevronDown, ChevronUp, Wallet } from "lucide-react";
-import Image from "next/image";
+// import Image from "next/image";
 
 const WalletModal = () => {
     const { availableProviders, handleConnect } = useConnection();
@@ -61,7 +61,7 @@ const WalletModal = () => {
                                     className="w-full justify-start gap-3 h-12 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200"
                                     onClick={() => connectWallet(provider)}
                                 >
-                                    <Image
+                                    <img
                                         src={provider.info.icon}
                                         alt={provider.info.name}
                                         width={24}

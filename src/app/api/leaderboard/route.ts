@@ -19,9 +19,9 @@ interface LeanUser {
     _id: mongoose.Types.ObjectId;
     address: string;
     socialLinks?: {
-        twitter?: string;
+        x?: string;
         github?: string;
-        linkedin?: string;
+        farcaster?: string;
     };
 }
 

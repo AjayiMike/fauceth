@@ -14,9 +14,10 @@ import { motion } from "framer-motion";
 import { Alert, AlertDescription } from "../ui/alert";
 import { isAddress } from "viem";
 import { displayNumber, formatDuration } from "@/lib/utils/formatting";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader } from "../ui/card";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 const RequestForm = ({
     balance,
@@ -32,9 +33,12 @@ const RequestForm = ({
     const [address, setAddress] = useState("");
     const [addressError, setAddressError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [hCaptchaToken, setHCaptchaToken] = useState<string | null>(null);
     const formattedBalance = balance ? displayNumber(balance, 3) : "0";
     const isZeroBalance = formattedBalance === "0";
     const isLowBalance = !isZeroBalance && Number(formattedBalance) < 1;
+
+    const hCaptchaRef = useRef<HCaptcha>(null);
 
     const renderAlert = () => {
         if (isZeroBalance) {
@@ -105,6 +109,7 @@ const RequestForm = ({
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "captcha-token": hCaptchaToken || "",
                 },
                 body: JSON.stringify({
                     address,
@@ -131,8 +136,17 @@ const RequestForm = ({
                 toast.error("An unknown error occurred");
             }
         } finally {
+            hCaptchaRef.current?.resetCaptcha();
             setIsLoading(false);
         }
+    };
+
+    const onHCaptchaExpire = () => {
+        toast.error("hCaptcha token expired");
+    };
+
+    const onHCaptchaError = (err: string) => {
+        toast.error(`hCaptcha Error: ${err}`);
     };
 
     return (
@@ -182,11 +196,27 @@ const RequestForm = ({
                                 </div>
                             </div>
 
+                            <HCaptcha
+                                sitekey={
+                                    process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY ||
+                                    ""
+                                }
+                                onExpire={onHCaptchaExpire}
+                                onError={onHCaptchaError}
+                                onVerify={setHCaptchaToken}
+                                ref={hCaptchaRef}
+                            />
+
                             <Button
                                 className="w-full h-12 text-base font-medium bg-blue-500 hover:bg-blue-600"
                                 size="lg"
                                 disabled={
-                                    isZeroBalance || !isValid || isLoading
+                                    isZeroBalance ||
+                                    !isValid ||
+                                    isLoading ||
+                                    !hCaptchaToken ||
+                                    !address ||
+                                    Boolean(addressError)
                                 }
                                 onClick={handleRequest}
                             >

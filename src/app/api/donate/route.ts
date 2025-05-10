@@ -16,6 +16,7 @@ import {
 } from "@/lib/networks";
 import mongoose from "mongoose";
 import { DonateResponse } from "@/lib/api/types";
+import { User } from "@/lib/db/models/user";
 
 const donateBodySchema = donationZodSchema
     .pick({
@@ -101,6 +102,12 @@ export async function POST(req: NextRequest) {
         // get or create user
         const user = await getOrCreateUser(getAddress(tx.from), session);
 
+        console.log("User donation count BEFORE:", user.donationCount);
+
+        // Check if this is the user's first donation - must check BEFORE recordDonation
+        const isFirstTimeDonor = user.donationCount === 0;
+        console.log("Is first time donor:", isFirstTimeDonor);
+
         // record donation
         await recordDonation(
             user._id.toString(),
@@ -112,10 +119,22 @@ export async function POST(req: NextRequest) {
             session
         );
 
+        // Verify user state after donation
+        const userAfter = await User.findById(user._id).session(session);
+        console.log("User donation count AFTER:", userAfter?.donationCount);
+
         await session.commitTransaction();
-        return success<DonateResponse>({
+
+        // Log the final response for debugging
+        const response = {
             success: true,
-        });
+            isFirstTimeDonor: isFirstTimeDonor === true,
+        };
+        console.log("Response sent to client:", response);
+        console.log("isFirstTimeDonor type:", typeof isFirstTimeDonor);
+        console.log("isFirstTimeDonor value:", isFirstTimeDonor);
+
+        return success<DonateResponse>(response);
     } catch (err) {
         await session.abortTransaction();
         console.debug("Donate error:", err);

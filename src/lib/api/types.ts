@@ -7,6 +7,7 @@ export interface RequestFaucetResponse {
 export interface DonateResponse {
     success: boolean;
     error?: string;
+    isFirstTimeDonor?: boolean;
 }
 
 export interface PaginatedResponse<T> {

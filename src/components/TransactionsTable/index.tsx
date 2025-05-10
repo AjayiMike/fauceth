@@ -9,38 +9,131 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowDownUp, History, Wallet } from "lucide-react";
+import { ArrowDownUp, History, Loader2, Wallet } from "lucide-react";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { formatDistanceToNow } from "date-fns";
+import { truncateAddress } from "@/lib/utils/formatting";
+
+interface Transaction {
+    _id: string;
+    userId: {
+        address: string;
+    };
+    amount: number;
+    createdAt: string;
+}
 
 const TransactionsTable = () => {
-    // Dummy data
-    const requests = [
-        {
-            address: "0x1234...5678",
-            amount: "0.1 ETH",
-            timestamp: "2 hours ago",
-        },
-        {
-            address: "0x8765...4321",
-            amount: "0.1 ETH",
-            timestamp: "5 hours ago",
-        },
-    ];
+    const [activeTab, setActiveTab] = useState<"requests" | "donations">(
+        "requests"
+    );
+    const [requests, setRequests] = useState<Transaction[]>([]);
+    const [donations, setDonations] = useState<Transaction[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const donations = [
-        {
-            address: "0xabcd...efgh",
-            amount: "0.5 ETH",
-            timestamp: "1 day ago",
-        },
-        {
-            address: "0xijkl...mnop",
-            amount: "1 ETH",
-            timestamp: "2 days ago",
-        },
-    ];
+    const fetchTransactions = async (type: "requests" | "donations") => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await fetch(`/api/${type}?page=1&limit=10`);
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch transactions");
+            }
+
+            // Extract data from nested structure
+            const transactions = result.data.data;
+
+            if (type === "requests") {
+                setRequests(transactions);
+            } else {
+                setDonations(transactions);
+            }
+        } catch (err) {
+            console.error(`Error fetching ${type}:`, err);
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "Failed to fetch transactions"
+            );
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchTransactions(activeTab);
+    }, [activeTab]);
 
     const MotionTableRow = motion(TableRow);
+
+    const renderTransactions = (transactions: Transaction[]) => {
+        if (isLoading) {
+            return (
+                <TableRow>
+                    <TableCell colSpan={3} className="text-center py-8">
+                        <div className="flex items-center justify-center">
+                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                        </div>
+                    </TableCell>
+                </TableRow>
+            );
+        }
+
+        if (error) {
+            return (
+                <TableRow>
+                    <TableCell
+                        colSpan={3}
+                        className="text-center py-8 text-red-500"
+                    >
+                        {error}
+                    </TableCell>
+                </TableRow>
+            );
+        }
+
+        if (!transactions.length) {
+            return (
+                <TableRow>
+                    <TableCell
+                        colSpan={3}
+                        className="text-center py-8 text-muted-foreground"
+                    >
+                        No transactions found
+                    </TableCell>
+                </TableRow>
+            );
+        }
+
+        return transactions.map((tx, index) => (
+            <MotionTableRow
+                key={tx._id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                    duration: 0.2,
+                    delay: index * 0.1,
+                }}
+                className={`hover:bg-${
+                    activeTab === "requests" ? "blue" : "rose"
+                }-500/5`}
+            >
+                <TableCell className="font-mono">
+                    {truncateAddress(tx.userId.address)}
+                </TableCell>
+                <TableCell>{tx.amount} ETH</TableCell>
+                <TableCell className="text-right text-muted-foreground">
+                    {formatDistanceToNow(new Date(tx.createdAt), {
+                        addSuffix: true,
+                    })}
+                </TableCell>
+            </MotionTableRow>
+        ));
+    };
 
     return (
         <div className="rounded-xl border bg-card overflow-hidden">
@@ -48,7 +141,13 @@ const TransactionsTable = () => {
                 <History className="h-5 w-5 text-muted-foreground" />
                 <h2 className="font-semibold">Recent Transactions</h2>
             </div>
-            <Tabs defaultValue="requests" className="w-full">
+            <Tabs
+                defaultValue="requests"
+                className="w-full"
+                onValueChange={(value) =>
+                    setActiveTab(value as "requests" | "donations")
+                }
+            >
                 <div className="px-6 py-4 border-b">
                     <TabsList className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
                         <TabsTrigger
@@ -82,26 +181,7 @@ const TransactionsTable = () => {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {requests.map((request, index) => (
-                                    <MotionTableRow
-                                        key={index}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{
-                                            duration: 0.2,
-                                            delay: index * 0.1,
-                                        }}
-                                        className="hover:bg-blue-500/5"
-                                    >
-                                        <TableCell className="font-mono">
-                                            {request.address}
-                                        </TableCell>
-                                        <TableCell>{request.amount}</TableCell>
-                                        <TableCell className="text-right text-muted-foreground">
-                                            {request.timestamp}
-                                        </TableCell>
-                                    </MotionTableRow>
-                                ))}
+                                {renderTransactions(requests)}
                             </TableBody>
                         </Table>
                     </div>
@@ -121,26 +201,7 @@ const TransactionsTable = () => {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {donations.map((donation, index) => (
-                                    <MotionTableRow
-                                        key={index}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{
-                                            duration: 0.2,
-                                            delay: index * 0.1,
-                                        }}
-                                        className="hover:bg-rose-500/5"
-                                    >
-                                        <TableCell className="font-mono">
-                                            {donation.address}
-                                        </TableCell>
-                                        <TableCell>{donation.amount}</TableCell>
-                                        <TableCell className="text-right text-muted-foreground">
-                                            {donation.timestamp}
-                                        </TableCell>
-                                    </MotionTableRow>
-                                ))}
+                                {renderTransactions(donations)}
                             </TableBody>
                         </Table>
                     </div>

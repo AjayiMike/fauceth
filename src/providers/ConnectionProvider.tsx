@@ -6,7 +6,13 @@ import {
     LOCAL_STORAGE_KEYS,
     switchChain,
 } from "@/config";
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useState,
+} from "react";
 
 type StateType = {
     isConnected: boolean;
@@ -64,7 +70,6 @@ export const ConnectionProvider = ({
             );
         } catch (error) {
             console.debug(error);
-            throw new Error("Failed to connect to provider");
         }
     }
 
@@ -116,6 +121,32 @@ export const ConnectionProvider = ({
         }
     };
 
+    const handleAccountsChanged = useCallback(
+        (accounts: string[]) => {
+            if (!connection) return;
+            if (connection.accounts[0] !== accounts[0]) {
+                setConnection({
+                    ...connection,
+                    accounts,
+                });
+            }
+        },
+        [connection]
+    );
+
+    const handleChainChanged = useCallback(
+        (chainId: string) => {
+            if (!connection) return;
+            if (connection.chainId !== Number(chainId)) {
+                setConnection({
+                    ...connection,
+                    chainId: Number(chainId),
+                });
+            }
+        },
+        [connection]
+    );
+
     useEffect(() => {
         /**
          * @title onAnnounceProvider
@@ -160,6 +191,35 @@ export const ConnectionProvider = ({
             setInjectedProviders(new Map());
         };
     }, []);
+
+    useEffect(() => {}, [connection]);
+
+    const connectedInjectectProvider =
+        connection && injectedProviders.get(connection.providerUUID);
+
+    useEffect(() => {
+        if (!connectedInjectectProvider) return;
+        connectedInjectectProvider.provider.on?.(
+            "accountsChanged",
+            (accounts) => {
+                handleAccountsChanged(accounts);
+            }
+        );
+        connectedInjectectProvider.provider.on?.("chainChanged", (chainId) => {
+            handleChainChanged(chainId);
+        });
+
+        return () => {
+            connectedInjectectProvider.provider.removeListener?.(
+                "accountsChanged",
+                handleAccountsChanged
+            );
+            connectedInjectectProvider.provider.removeListener?.(
+                "chainChanged",
+                handleChainChanged
+            );
+        };
+    }, [connectedInjectectProvider, handleAccountsChanged, handleChainChanged]);
 
     return (
         <ConnectionContext.Provider
