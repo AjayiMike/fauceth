@@ -25,7 +25,10 @@ export async function GET() {
             });
         } catch (err) {
             console.debug("Health check error:", err);
-            return error("Service unhealthy", 503);
+            return error(
+                "The faucet service is currently experiencing technical difficulties. Our team has been notified and is working to resolve the issue.",
+                503
+            );
         }
     });
 }

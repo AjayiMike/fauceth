@@ -16,7 +16,12 @@ export async function POST(req: NextRequest) {
         const { address, ...links } = validateRequest(
             body,
             z.object({
-                address: z.string(),
+                address: z
+                    .string()
+                    .regex(
+                        /^0x[a-fA-F0-9]{40}$/,
+                        "Please provide a valid Ethereum address (starting with 0x followed by 40 hexadecimal characters)"
+                    ),
                 ...socialLinksSchema.shape,
             }).parse
         );
@@ -30,14 +35,29 @@ export async function POST(req: NextRequest) {
         );
 
         if (!user) {
-            return error("User not found", 404);
+            return error(
+                "We couldn't find your user profile. Please make sure you've connected the correct wallet address.",
+                404
+            );
         }
 
         return success({ success: true });
     } catch (err) {
         console.error("Social links update error:", err);
+        if (err instanceof z.ZodError) {
+            // Handle validation errors specifically
+            const errorMessage = err.errors
+                .map((e) => `${e.path.join(".")}: ${e.message}`)
+                .join(", ");
+            return error(
+                `Please check your social link details: ${errorMessage}`,
+                400
+            );
+        }
         return error(
-            err instanceof Error ? err.message : "Internal server error",
+            err instanceof Error
+                ? `Something went wrong while saving your social links: ${err.message}. Please try again.`
+                : "An unexpected error occurred while saving your social links. Please try again later.",
             500
         );
     }

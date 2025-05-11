@@ -26,7 +26,10 @@ const donateBodySchema = donationZodSchema
     .extend({
         txHash: z
             .string()
-            .regex(/^0x[a-fA-F0-9]{64}$/, "Invalid Ethereum transaction hash"),
+            .regex(
+                /^0x[a-fA-F0-9]{64}$/,
+                "Please provide a valid Ethereum transaction hash (starting with 0x followed by 64 hexadecimal characters)"
+            ),
     });
 
 type DonateBody = z.infer<typeof donateBodySchema>;
@@ -52,21 +55,30 @@ export async function POST(req: NextRequest) {
         );
         if (existingDonation) {
             await session.abortTransaction();
-            return error("Transaction already recorded", 400);
+            return error(
+                "This transaction has already been recorded as a donation. Please use a different transaction.",
+                400
+            );
         }
 
         // fetch network details
         const networkDetails = await getNetworkInfo(networkId);
         if (!networkDetails.rpc.length) {
             await session.abortTransaction();
-            return error("No RPC URLs found for network", 400);
+            return error(
+                `The network (ID: ${networkId}) is not supported or lacks RPC configuration. Please try a different network.`,
+                400
+            );
         }
 
         // filter working RPCs
         const workingRPCURLs = await filterWorkingRPCs(networkDetails.rpc);
         if (workingRPCURLs.length === 0) {
             await session.abortTransaction();
-            return error("No working RPC URLs found for network", 400);
+            return error(
+                `Network connectivity issue with ${networkDetails.name}. We're unable to verify your transaction at this time. Please try again later.`,
+                400
+            );
         }
 
         // get transaction
@@ -78,7 +90,10 @@ export async function POST(req: NextRequest) {
         // verify transaction status
         if (!status || status === "reverted") {
             await session.abortTransaction();
-            return error("Transaction was reverted", 400);
+            return error(
+                "The transaction was reverted or failed on the blockchain. Please provide a successful transaction.",
+                400
+            );
         }
 
         // verify transaction is to faucet
@@ -90,13 +105,19 @@ export async function POST(req: NextRequest) {
             )
         ) {
             await session.abortTransaction();
-            return error("Transaction was not to faucet", 400);
+            return error(
+                `This transaction wasn't sent to our faucet address (${process.env.NEXT_PUBLIC_FAUCET_ADDRESS}). Please use a transaction that was sent to our faucet.`,
+                400
+            );
         }
 
         // verify transaction value is not 0
         if (BigInt(tx.value) === BigInt(0)) {
             await session.abortTransaction();
-            return error("No ETH sent with this transaction", 400);
+            return error(
+                "The transaction didn't include any ETH. Please provide a transaction that sends ETH to our faucet.",
+                400
+            );
         }
 
         // get or create user
@@ -138,8 +159,20 @@ export async function POST(req: NextRequest) {
     } catch (err) {
         await session.abortTransaction();
         console.debug("Donate error:", err);
+        if (err instanceof z.ZodError) {
+            // Handle validation errors specifically
+            const errorMessage = err.errors
+                .map((e) => `${e.path.join(".")}: ${e.message}`)
+                .join(", ");
+            return error(
+                `Please check your donation details: ${errorMessage}`,
+                400
+            );
+        }
         return error(
-            err instanceof Error ? err.message : "Internal server error",
+            err instanceof Error
+                ? `Something went wrong with your donation: ${err.message}. Please try again or contact @0xadek on x if the issue persists.`
+                : "An unexpected error occurred while processing your donation. Please try again later.",
             500
         );
     } finally {
