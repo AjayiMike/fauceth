@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { useConnection } from "@/providers/ConnectionProvider";
 import { useCallback, useState } from "react";
 import { ChevronDown, ChevronUp, Wallet } from "lucide-react";
-// import Image from "next/image";
 
 const WalletModal = () => {
     const { availableProviders, handleConnect } = useConnection();
