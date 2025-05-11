@@ -5,24 +5,26 @@ import { NextRequest } from "next/server";
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { networkId: string } }
+    { params }: { params: Promise<{ networkId: string }> }
 ) {
     try {
-        if (!params.networkId) {
+        const { networkId } = await params;
+
+        if (!networkId) {
             return error("Network ID is required", 400);
         }
 
-        if (isNaN(Number(params.networkId))) {
+        if (isNaN(Number(networkId))) {
             return error("Network ID must be a number", 400);
         }
 
-        const networkId = Number(params.networkId);
+        const networkIdNumber = Number(networkId);
 
-        validateChainId(networkId);
+        validateChainId(networkIdNumber);
 
         try {
             // Use the getNetworkInfo function to get the network details
-            const network = await getNetworkInfo(networkId);
+            const network = await getNetworkInfo(networkIdNumber);
             return success<INetwork>(network);
         } catch (networkError) {
             // Handle specific network errors

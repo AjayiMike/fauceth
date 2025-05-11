@@ -16,7 +16,7 @@ const querySchema = z.object({
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { address: string } }
+    { params }: { params: Promise<{ address: string }> }
 ) {
     return withDB(async () => {
         try {
@@ -26,7 +26,7 @@ export async function GET(
             );
 
             // Validate address parameter
-            const address = await params.address;
+            const { address } = await params;
             if (!address || !/^0x[a-fA-F0-9]{40}$/.test(address)) {
                 return error("Invalid Ethereum address", 400);
             }
