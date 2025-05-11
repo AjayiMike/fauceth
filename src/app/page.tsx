@@ -31,7 +31,7 @@ export default function Home() {
                         faucetAmount={dropAmount ?? undefined}
                         cooldownPeriod={cooldownDuration ?? undefined}
                     />
-                    <div className="grid grid-cols-12 gap-8 max-w-6xl mx-auto">
+                    <div className="grid grid-cols-12 gap-8 w-full">
                         <div className="col-span-12 lg:col-span-8 w-full">
                             <Tabs defaultValue="request" className="w-full">
                                 <TabsList className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">

@@ -8,7 +8,7 @@ import { displayNumber, formatDuration } from "@/lib/utils/formatting";
 
 const FaucetInfoSkeleton = () => {
     return (
-        <div className="max-w-2xl mx-auto">
+        <div className="w-full">
             <div className="flex flex-wrap gap-4 items-center">
                 {[1, 2, 3].map((index) => (
                     <motion.div
@@ -16,7 +16,7 @@ const FaucetInfoSkeleton = () => {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2, delay: index * 0.1 }}
-                        className="flex items-center gap-3 px-4 py-2 rounded-lg bg-gray-200"
+                        className="flex items-center gap-3 px-4 py-2 rounded-lg bg-accent/80"
                     >
                         <Skeleton className="h-8 w-8 rounded-full" />
                         <div className="flex flex-col gap-1">
@@ -70,7 +70,7 @@ const FaucetInfo: FC<{
     }
 
     return (
-        <div className="max-w-6xl mx-auto">
+        <div className="w-full">
             <dl className="flex flex-wrap gap-4 items-center">
                 {items.map((item, index) => (
                     <motion.div
