@@ -7,7 +7,7 @@ export async function getPassportScore(
         `${process.env.PASSPORT_API_BASE_URL}/v2/stamps/${process.env.PASSPORT_SCORER_ID}/score/${address}`,
         {
             headers: {
-                Authorization: `Bearer ${process.env.PASSPORT_API_KEY}`,
+                "X-API-Key": process.env.PASSPORT_API_KEY as string,
             },
         }
     );
