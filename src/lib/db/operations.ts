@@ -2,10 +2,32 @@ import { IUser, IDonation, IRequest } from "./models";
 import { ClientSession } from "mongodb";
 import { User, Request, Donation, RateLimit, IpAddress } from "./models";
 
-export async function checkRateLimit(
-    address: string,
+export async function checkRateLimitForIpAddress(
     ipAddress: string,
-    networkId: number,
+    session?: ClientSession
+) {
+    const now = new Date();
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const rateLimit = await RateLimit.findOne({
+        ipAddress,
+        lastRequestAt: { $gte: oneDayAgo },
+    }).session(session || null);
+
+    if (!rateLimit) {
+        return { canRequest: true };
+    }
+
+    return {
+        canRequest: false,
+        nextAvailableAt: new Date(
+            rateLimit.lastRequestAt.getTime() + 24 * 60 * 60 * 1000
+        ),
+    };
+}
+
+export async function checkRateLimitForWalletAddress(
+    address: string,
     session?: ClientSession
 ) {
     const now = new Date();
@@ -13,8 +35,6 @@ export async function checkRateLimit(
 
     const rateLimit = await RateLimit.findOne({
         walletAddress: address,
-        ipAddress,
-        networkId,
         lastRequestAt: { $gte: oneDayAgo },
     }).session(session || null);
 
@@ -84,12 +104,12 @@ export async function updateRateLimit(
     }
 }
 
-export async function checkUserExists(
+export async function checkUserExistsAndDonations(
     address: string,
     session?: ClientSession
-): Promise<boolean> {
+): Promise<[boolean, number]> {
     const user = await getUser(address, session);
-    return !!user;
+    return [!!user, user?.totalDonations || 0];
 }
 
 export async function getUser(

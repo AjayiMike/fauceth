@@ -1,12 +1,13 @@
 import { NextRequest } from "next/server";
 import { success, error, validateRequest } from "@/lib/api/response";
 import {
-    checkRateLimit,
+    checkRateLimitForIpAddress,
+    checkRateLimitForWalletAddress,
     updateRateLimit,
     getOrCreateUser,
     recordRequest,
     getOrCreateIpAddress,
-    checkUserExists,
+    checkUserExistsAndDonations,
 } from "@/lib/db/operations";
 import { z } from "zod";
 import { Address, getAddress } from "viem";
@@ -28,7 +29,10 @@ const requestBodySchema = z.object({
     networkId: z.number().int().positive(),
     address: z
         .string()
-        .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address"),
+        .regex(
+            /^0x[a-fA-F0-9]{40}$/,
+            "Please provide a valid Ethereum address (starting with 0x followed by 40 hexadecimal characters)"
+        ),
 });
 
 type RequestBody = z.infer<typeof requestBodySchema>;
@@ -54,7 +58,10 @@ export async function POST(req: NextRequest) {
         const captchaToken = req.headers.get("captcha-token");
 
         if (!captchaToken) {
-            return error("hCaptcha token not found", 403);
+            return error(
+                "Security verification failed: hCaptcha token not found. Please refresh the page and try again with hCaptcha enabled.",
+                403
+            );
         }
 
         const hCaptchaResponse = await verifyHCaptcha(
@@ -65,44 +72,88 @@ export async function POST(req: NextRequest) {
         );
 
         if (!hCaptchaResponse.success) {
-            return error("hCaptcha verification failed", 403);
+            return error(
+                "Security verification failed: hCaptcha validation was unsuccessful. Please refresh the page and complete the hCaptcha challenge again.",
+                403
+            );
         }
 
         return await withTransaction(async (session) => {
             // Check rate limit
-            const rateLimit = await checkRateLimit(
-                checkSummedAddress,
+            const ipRateLimit = await checkRateLimitForIpAddress(
                 ipAddress,
-                networkId,
                 session
             );
 
-            if (!rateLimit.canRequest && rateLimit.nextAvailableAt) {
+            const walletRateLimit = await checkRateLimitForWalletAddress(
+                checkSummedAddress,
+                session
+            );
+
+            if (!ipRateLimit.canRequest && ipRateLimit.nextAvailableAt) {
                 return error(
-                    `Rate limit exceeded. Try again in ${formatDistanceToNow(
-                        rateLimit.nextAvailableAt,
+                    `Your IP address has reached the request limit. You can request tokens again in ${formatDistanceToNow(
+                        ipRateLimit.nextAvailableAt,
                         { addSuffix: false }
-                    )}`,
+                    )}. This cooldown helps ensure fair distribution for everyone.`,
                     429
                 );
             }
 
-            const userExists = await checkUserExists(
-                checkSummedAddress,
-                session
-            );
+            if (
+                !walletRateLimit.canRequest &&
+                walletRateLimit.nextAvailableAt
+            ) {
+                return error(
+                    `This wallet address has reached the request limit. You can request tokens again in ${formatDistanceToNow(
+                        walletRateLimit.nextAvailableAt,
+                        { addSuffix: false }
+                    )}. This cooldown helps ensure fair distribution for everyone.`,
+                    429
+                );
+            }
 
-            // if user does not exist in the system yet, check their passport score and ensure it meets threshold
-            if (!userExists) {
+            const [userExists, totalDonations] =
+                await checkUserExistsAndDonations(checkSummedAddress, session);
+
+            if (userExists) {
+                // For existing users, check if they have sufficient donations
+                const hasSufficientDonations =
+                    totalDonations >=
+                    Number(
+                        process.env
+                            .NEXT_PUBLIC_MIN_DONATION_REQUIRED_FOR_VERIFICATION
+                    );
+
+                // If they haven't donated enough, check their Passport score
+                if (!hasSufficientDonations) {
+                    const [meetsThreshold, score] = await getPassportScore(
+                        checkSummedAddress
+                    );
+
+                    // If both verification methods fail, return error with both options
+                    if (!meetsThreshold) {
+                        return error(
+                            `Verification required: Your donations (${totalDonations} ETH) are below our threshold of ${process.env.NEXT_PUBLIC_MIN_DONATION_REQUIRED_FOR_VERIFICATION} ETH, and your Gitcoin Passport score (${score}) is below our required threshold of ${process.env.PASSPORT_SCORE_THRESHOLD}. Please either make a donation or increase your Passport score at https://app.passport.xyz to use the faucet.`,
+                            403
+                        );
+                    }
+                    // Continue if Passport score is good (even if donations aren't)
+                }
+                // Continue if donations are good
+            } else {
+                // For new users, they can't have donations yet, so check only Passport score
                 const [meetsThreshold, score] = await getPassportScore(
                     checkSummedAddress
                 );
+
                 if (!meetsThreshold) {
                     return error(
-                        `Passport score too low. Required at least ${process.env.PASSPORT_SCORE_THRESHOLD}, Actual: ${score}`,
+                        `Your Gitcoin Passport score (${score}) needs to be at least ${process.env.PASSPORT_SCORE_THRESHOLD} to use this faucet. Please visit https://app.passport.xyz to increase your score, or consider making a small donation instead.`,
                         403
                     );
                 }
+                // Continue if Passport score is good
             }
 
             // Get network details and working RPCs
@@ -110,7 +161,10 @@ export async function POST(req: NextRequest) {
             const workingRPCs = await filterWorkingRPCs(networkDetails.rpc);
 
             if (workingRPCs.length === 0) {
-                return error("No working RPCs found", 503);
+                return error(
+                    "Network connectivity issue. We're having trouble connecting to the blockchain right now. Please try again in a few minutes.",
+                    503
+                );
             }
 
             // Get faucet's ETH balance
@@ -123,7 +177,10 @@ export async function POST(req: NextRequest) {
             const claimAmount = calculateDailyClaimAmount(balance);
 
             if (claimAmount === 0) {
-                return error("Low faucet balance", 503);
+                return error(
+                    "The faucet is currently low on funds. Please check back later or consider making a donation to help replenish it.",
+                    503
+                );
             }
 
             // Get or create user and IP address
@@ -165,8 +222,17 @@ export async function POST(req: NextRequest) {
         });
     } catch (err) {
         console.debug("Request error:", err);
+        if (err instanceof z.ZodError) {
+            // Handle validation errors specifically
+            const errorMessage = err.errors
+                .map((e) => `${e.path.join(".")}: ${e.message}`)
+                .join(", ");
+            return error(`Please check your request: ${errorMessage}`, 400);
+        }
         return error(
-            err instanceof Error ? err.message : "Internal server error",
+            err instanceof Error
+                ? `Something went wrong: ${err.message}. Please try again or contact @0xadek on x if the issue persists.`
+                : "An unexpected error occurred while processing your request. Please try again later.",
             500
         );
     }
