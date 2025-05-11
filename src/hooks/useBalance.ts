@@ -34,7 +34,14 @@ const useBalance = (_account?: string) => {
         }),
         transport: transport,
     });
-    const { data: balance, isLoading } = useQuery({
+    const {
+        data: balance,
+        isLoading,
+        isFetching,
+        isRefetching,
+        isError,
+        error,
+    } = useQuery({
         queryKey: ["ETHBalance", targetAccount, chainId, network?.rpc],
         queryFn: async () => {
             if (!targetAccount) return BigInt(0);
@@ -49,7 +56,12 @@ const useBalance = (_account?: string) => {
     return {
         balance,
         formattedBalance: formatEther(balance ?? BigInt(0)),
-        isLoading,
+        // Loading states
+        isLoading, // True when fetching for the first time with no data yet
+        isFetching, // True whenever a fetch is in progress
+        isRefetching, // True when refetching data that already exists
+        isError, // True if there was an error fetching the balance
+        error, // The error object if an error occurred
     };
 };
 

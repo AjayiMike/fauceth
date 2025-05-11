@@ -17,7 +17,7 @@ import { useNetworksStore } from "@/lib/store/networksStore";
 
 export default function Home() {
     const { account } = useConnection();
-    const { balance, cooldownDuration, dropAmount } = useFaucetInfo(
+    const { balance, cooldownDuration, dropAmount, isLoading } = useFaucetInfo(
         account as Address | undefined
     );
     const { selectedNetwork } = useNetworksStore();
@@ -64,6 +64,7 @@ export default function Home() {
                                             cooldownDuration ?? undefined
                                         }
                                         networkId={selectedNetwork?.chainId}
+                                        isBalanceLoading={isLoading}
                                     />
                                 </TabsContent>
                                 <TabsContent value="donate" className="mt-6">

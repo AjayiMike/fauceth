@@ -24,11 +24,13 @@ const RequestForm = ({
     faucetAmount,
     cooldownPeriod,
     networkId,
+    isBalanceLoading,
 }: {
     balance?: number;
     faucetAmount?: number;
     cooldownPeriod?: number;
     networkId?: number;
+    isBalanceLoading?: boolean;
 }) => {
     const [address, setAddress] = useState("");
     const [addressError, setAddressError] = useState<string | null>(null);
@@ -41,6 +43,20 @@ const RequestForm = ({
     const hCaptchaRef = useRef<HCaptcha>(null);
 
     const renderAlert = () => {
+        if (isBalanceLoading) {
+            return (
+                <Alert className="bg-blue-500/10 text-blue-600 border-blue-200">
+                    <Loader2
+                        className="h-5 w-5 mt-0.5 animate-spin"
+                        aria-hidden="true"
+                    />
+                    <AlertDescription className="text-blue-600/80">
+                        Loading faucet information...
+                    </AlertDescription>
+                </Alert>
+            );
+        }
+
         if (isZeroBalance) {
             return (
                 <Alert className="bg-blue-500/10 text-blue-600 border-blue-200">
@@ -64,7 +80,15 @@ const RequestForm = ({
                         aria-hidden="true"
                     />
                     <AlertDescription className="text-blue-600/80">
-                        The faucet balance is running low ({formattedBalance}{" "}
+                        The faucet balance is running low (
+                        {isBalanceLoading ? (
+                            <span className="inline-flex items-center">
+                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                Loading...
+                            </span>
+                        ) : (
+                            formattedBalance
+                        )}{" "}
                         ETH). You can still request{" "}
                         {displayNumber(faucetAmount || 0, 3)} ETH every{" "}
                         {formatDuration(cooldownPeriod || 0)}, but please

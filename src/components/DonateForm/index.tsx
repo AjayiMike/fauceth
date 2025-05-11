@@ -423,12 +423,28 @@ const DonateForm = () => {
                     <CardContent className="pt-4">
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <label
-                                    htmlFor="donateAmountInput"
-                                    className="block text-sm font-medium text-muted-foreground"
-                                >
-                                    Amount (ETH)
-                                </label>
+                                <div className="text-sm text-muted-foreground mb-2 flex items-center justify-between">
+                                    <label
+                                        htmlFor="donateAmountInput"
+                                        className="block text-sm font-medium text-muted-foreground"
+                                    >
+                                        Enter donation amount
+                                    </label>
+                                    <span>
+                                        Balance:{" "}
+                                        {isLoading ? (
+                                            <span className="inline-flex items-center">
+                                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                Loading...
+                                            </span>
+                                        ) : (
+                                            `${displayNumber(
+                                                formattedBalance,
+                                                3
+                                            )} ETH`
+                                        )}
+                                    </span>
+                                </div>
                                 <NumericalInput
                                     id="donateAmountInput"
                                     placeholder="0.0"
@@ -449,7 +465,17 @@ const DonateForm = () => {
                                         className="text-xs text-destructive mt-1"
                                     >
                                         Insufficient balance. You have{" "}
-                                        {formattedBalance} ETH.
+                                        {isLoading ? (
+                                            <span className="inline-flex items-center">
+                                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                Loading...
+                                            </span>
+                                        ) : (
+                                            `${displayNumber(
+                                                formattedBalance,
+                                                3
+                                            )} ETH`
+                                        )}
                                     </p>
                                 )}
                                 {!isConnected && (
