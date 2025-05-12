@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { User, IpAddress, RateLimit, Donation, Request } from "./models";
+import { User, IpAddress, Donation, Request } from "./models";
 
 if (!process.env.MONGODB_URI) {
     throw new Error(
@@ -30,7 +30,6 @@ export async function connectDB() {
             Donation.createIndexes(),
             Request.createIndexes(),
             IpAddress.createIndexes(),
-            RateLimit.createIndexes(),
         ]);
     } catch (error) {
         console.debug("MongoDB connection error:", error);
@@ -65,7 +64,6 @@ process.on("SIGINT", async () => {
 export const collections = {
     users: User,
     ipAddresses: IpAddress,
-    rateLimits: RateLimit,
     donations: Donation,
     requests: Request,
 } as const;

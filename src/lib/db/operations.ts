@@ -1,6 +1,6 @@
 import { IUser, IDonation, IRequest } from "./models";
 import { ClientSession } from "mongodb";
-import { User, Request, Donation, RateLimit, IpAddress } from "./models";
+import { User, Request, Donation, IpAddress } from "./models";
 
 export async function checkRateLimitForIpAddress(
     ipAddress: string,
@@ -9,19 +9,31 @@ export async function checkRateLimitForIpAddress(
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    const rateLimit = await RateLimit.findOne({
-        ipAddress,
-        lastRequestAt: { $gte: oneDayAgo },
+    // Find latest request using this IP address
+    const ipAddressDoc = await IpAddress.findOne({
+        address: ipAddress,
     }).session(session || null);
 
-    if (!rateLimit) {
+    if (!ipAddressDoc) {
+        return { canRequest: true };
+    }
+
+    // Check if there's a request within the last 24 hours
+    const recentRequest = await Request.findOne({
+        ipAddressId: ipAddressDoc._id,
+        createdAt: { $gte: oneDayAgo },
+    })
+        .sort({ createdAt: -1 })
+        .session(session || null);
+
+    if (!recentRequest) {
         return { canRequest: true };
     }
 
     return {
         canRequest: false,
         nextAvailableAt: new Date(
-            rateLimit.lastRequestAt.getTime() + 24 * 60 * 60 * 1000
+            recentRequest.createdAt.getTime() + 24 * 60 * 60 * 1000
         ),
     };
 }
@@ -33,75 +45,30 @@ export async function checkRateLimitForWalletAddress(
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    const rateLimit = await RateLimit.findOne({
-        walletAddress: address,
-        lastRequestAt: { $gte: oneDayAgo },
-    }).session(session || null);
+    const user = await User.findOne({ address }).session(session || null);
 
-    if (!rateLimit) {
+    if (!user) {
+        return { canRequest: true };
+    }
+
+    // Check if there's a request within the last 24 hours
+    const recentRequest = await Request.findOne({
+        userId: user._id,
+        createdAt: { $gte: oneDayAgo },
+    })
+        .sort({ createdAt: -1 })
+        .session(session || null);
+
+    if (!recentRequest) {
         return { canRequest: true };
     }
 
     return {
         canRequest: false,
         nextAvailableAt: new Date(
-            rateLimit.lastRequestAt.getTime() + 24 * 60 * 60 * 1000
+            recentRequest.createdAt.getTime() + 24 * 60 * 60 * 1000
         ),
     };
-}
-
-export async function updateRateLimit(
-    address: string,
-    ipAddress: string,
-    networkId: number,
-    session?: ClientSession
-) {
-    const now = new Date();
-    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-    try {
-        // First try to update an existing record
-        const result = await RateLimit.findOneAndUpdate(
-            {
-                walletAddress: address,
-                ipAddress,
-                networkId,
-                lastRequestAt: { $gte: oneDayAgo },
-            },
-            {
-                $set: {
-                    lastRequestAt: now,
-                },
-                $inc: {
-                    requestCount: 1,
-                },
-            },
-            { new: true, session: session || null }
-        );
-
-        // If no existing record was found, create a new one
-        if (!result) {
-            await RateLimit.create(
-                [
-                    {
-                        walletAddress: address,
-                        ipAddress,
-                        networkId,
-                        lastRequestAt: now,
-                        requestCount: 1,
-                        intervalStart: now,
-                    },
-                ],
-                { session: session || null }
-            );
-        }
-    } catch (error) {
-        // If we get a duplicate key error, it means another request created the record
-        // between our check and create. This is fine, we can ignore it.
-        if (error instanceof Error && "code" in error && error.code !== 11000) {
-            throw error;
-        }
-    }
 }
 
 export async function checkUserExistsAndDonations(
@@ -215,17 +182,32 @@ export async function recordRequest(
         { session: session || null }
     );
 
-    await User.findByIdAndUpdate(
-        userId,
-        {
-            $inc: {
-                totalRequests: amount,
-                requestCount: 1,
+    const now = new Date();
+
+    await Promise.all([
+        // Update user record
+        User.findByIdAndUpdate(
+            userId,
+            {
+                $inc: {
+                    totalRequests: amount,
+                    requestCount: 1,
+                },
+                $set: { lastRequestAt: now },
             },
-            $set: { lastRequestAt: new Date() },
-        },
-        { session: session || null }
-    );
+            { session: session || null }
+        ),
+
+        // Update IP address record
+        IpAddress.findByIdAndUpdate(
+            ipAddressId,
+            {
+                $inc: { requestCount: 1 },
+                $set: { lastSeenAt: now },
+            },
+            { session: session || null }
+        ),
+    ]);
 
     return request[0];
 }

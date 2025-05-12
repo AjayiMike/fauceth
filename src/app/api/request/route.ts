@@ -3,7 +3,6 @@ import { success, error, validateRequest } from "@/lib/api/response";
 import {
     checkRateLimitForIpAddress,
     checkRateLimitForWalletAddress,
-    updateRateLimit,
     getOrCreateUser,
     recordRequest,
     getOrCreateIpAddress,
@@ -204,14 +203,6 @@ export async function POST(req: NextRequest) {
                 networkId,
                 claimAmount,
                 txHash,
-                session
-            );
-
-            // Update rate limit
-            await updateRateLimit(
-                checkSummedAddress,
-                ipAddress,
-                networkId,
                 session
             );
 
