@@ -28,6 +28,15 @@ import { Input } from "@/components/ui/input";
 
 type DonationStep = "confirm" | "pending" | "success" | "socials";
 
+// More specific transaction states for better UX
+type TransactionStatus =
+    | "initiating"
+    | "signing"
+    | "mining"
+    | "confirming"
+    | "verifying"
+    | "complete";
+
 const DonateForm = () => {
     const { isConnected, chainId, account } = useConnection();
     const { balance, formattedBalance, isLoading } = useBalance();
@@ -36,7 +45,13 @@ const DonateForm = () => {
     const [amount, setAmount] = useState("");
     const [showDonationModal, setShowDonationModal] = useState(false);
     const [currentStep, setCurrentStep] = useState<DonationStep>("confirm");
+    const [txStatus, setTxStatus] = useState<TransactionStatus>("initiating");
     const [socialLinks, setSocialLinks] = useState({
+        x: "",
+        github: "",
+        farcaster: "",
+    });
+    const [socialErrors, setSocialErrors] = useState({
         x: "",
         github: "",
         farcaster: "",
@@ -58,6 +73,52 @@ const DonateForm = () => {
     useEffect(() => {
         console.log("Current step updated:", currentStep);
     }, [currentStep]);
+
+    // Validate social links
+    const validateSocialLink = (
+        type: "x" | "github" | "farcaster",
+        value: string
+    ) => {
+        // Empty is valid
+        if (!value) {
+            return "";
+        }
+
+        // Check if starts with @
+        if (value.startsWith("@")) {
+            return "Username should not start with @";
+        }
+
+        // General username validation - alphanumeric with underscore and some special characters
+        const usernameRegex = /^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/;
+        if (!usernameRegex.test(value)) {
+            return "Username can only contain letters, numbers, underscores, dots, or hyphens";
+        }
+
+        return "";
+    };
+
+    const handleSocialInputChange = (
+        type: "x" | "github" | "farcaster",
+        value: string
+    ) => {
+        setSocialLinks((prev) => ({
+            ...prev,
+            [type]: value,
+        }));
+
+        // Validate on change
+        const error = validateSocialLink(type, value);
+        setSocialErrors((prev) => ({
+            ...prev,
+            [type]: error,
+        }));
+    };
+
+    // Check if any social input has errors
+    const hasSocialErrors = Object.values(socialErrors).some(
+        (error) => error !== ""
+    );
 
     const handleDonateClick = () => {
         setCurrentStep("confirm");
@@ -105,10 +166,14 @@ const DonateForm = () => {
 
             // Update state to show pending
             setCurrentStep("pending");
+            setTxStatus("signing");
 
+            // User is signing transaction
             const txHash = await donate(chain, amount);
-
             toast.info("Transaction sent. Waiting for confirmation...");
+
+            // Transaction has been sent, waiting for confirmation
+            setTxStatus("mining");
 
             const receipt = await publicClient.waitForTransactionReceipt({
                 hash: txHash,
@@ -118,6 +183,9 @@ const DonateForm = () => {
                 toast.error("Transaction reverted. Please try again.");
                 return;
             }
+
+            // Transaction confirmed, now verifying on backend
+            setTxStatus("verifying");
 
             // Record donation on backend
             const response = await fetch("/api/donate", {
@@ -133,22 +201,15 @@ const DonateForm = () => {
 
             const { data } = await response.json();
 
-            console.log("Donation API response:", data);
+            console.log({ data, response });
+
             console.log("API response status:", response.status);
 
             if (!response.ok) {
-                throw new Error(data.message || "Failed to record donation");
+                throw new Error(data?.message || "Failed to record donation");
             }
 
-            // Show success and check if first donation
-            console.log(
-                "Is first time donor from API:",
-                data?.isFirstTimeDonor
-            );
-            console.log(
-                "Is first time donor type:",
-                typeof data?.isFirstTimeDonor
-            );
+            setTxStatus("complete");
 
             // Force update to the correct step based on the response
             if (data?.isFirstTimeDonor === true) {
@@ -175,6 +236,28 @@ const DonateForm = () => {
 
     const handleSocialLinksSubmit = async () => {
         try {
+            // Validate all inputs before submission
+            const xError = validateSocialLink("x", socialLinks.x);
+            const githubError = validateSocialLink(
+                "github",
+                socialLinks.github
+            );
+            const farcasterError = validateSocialLink(
+                "farcaster",
+                socialLinks.farcaster
+            );
+
+            setSocialErrors({
+                x: xError,
+                github: githubError,
+                farcaster: farcasterError,
+            });
+
+            // If there are any errors, prevent submission
+            if (xError || githubError || farcasterError) {
+                return;
+            }
+
             const response = await fetch("/api/users/social-links", {
                 method: "POST",
                 headers: {
@@ -202,7 +285,42 @@ const DonateForm = () => {
     const handleModalClose = () => {
         setShowDonationModal(false);
         setCurrentStep("confirm");
+        setTxStatus("initiating");
         setSocialLinks({ x: "", github: "", farcaster: "" });
+        setSocialErrors({ x: "", github: "", farcaster: "" });
+    };
+
+    // Get transaction status display info
+    const getStatusInfo = () => {
+        switch (txStatus) {
+            case "signing":
+                return {
+                    title: "Sign Transaction",
+                    message: "Please sign the transaction in your wallet",
+                };
+            case "mining":
+                return {
+                    title: "Processing Transaction",
+                    message:
+                        "Your transaction is being processed on the blockchain. This may take a few moment.",
+                };
+            case "verifying":
+                return {
+                    title: "Verifying Donation",
+                    message:
+                        "Transaction confirmed! Now verifying your donation on our servers.",
+                };
+            case "complete":
+                return {
+                    title: "Donation Complete",
+                    message: "Your donation has been successfully verified!",
+                };
+            default:
+                return {
+                    title: "Processing Donation",
+                    message: "Please wait while we process your donation.",
+                };
+        }
     };
 
     const renderModalContent = () => {
@@ -256,19 +374,78 @@ const DonateForm = () => {
                     </>
                 );
             case "pending":
+                const statusInfo = getStatusInfo();
                 return (
                     <>
                         <DialogHeader>
-                            <DialogTitle>Processing Donation</DialogTitle>
+                            <DialogTitle>{statusInfo.title}</DialogTitle>
                             <DialogDescription>
-                                Please wait while we process your donation
+                                {txStatus === "signing"
+                                    ? "Please approve the transaction in your wallet"
+                                    : "Please wait while we process your donation"}
                             </DialogDescription>
                         </DialogHeader>
                         <div className="py-8 flex flex-col items-center justify-center space-y-4">
                             <Loader2 className="h-8 w-8 animate-spin text-rose-500" />
-                            <p className="text-sm text-muted-foreground text-center">
-                                Your donation is being processed. Please
-                                don&apos;t close this window.
+                            <div className="text-center">
+                                <p className="font-medium mb-2">
+                                    {txStatus === "mining" &&
+                                        "Transaction sent"}
+                                    {txStatus === "verifying" &&
+                                        "Transaction confirmed"}
+                                    {txStatus === "complete" &&
+                                        "Verification complete"}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    {statusInfo.message}
+                                </p>
+                            </div>
+
+                            {/* Progress steps visualization */}
+                            <div className="w-full max-w-sm mt-4">
+                                <div className="relative flex items-center justify-between w-full">
+                                    <div
+                                        className={`h-2.5 w-2.5 rounded-full ${
+                                            txStatus !== "initiating"
+                                                ? "bg-rose-500"
+                                                : "bg-gray-300"
+                                        }`}
+                                    ></div>
+                                    <div
+                                        className={`h-2.5 w-2.5 rounded-full ${
+                                            txStatus !== "initiating" &&
+                                            txStatus !== "signing"
+                                                ? "bg-rose-500"
+                                                : "bg-gray-300"
+                                        }`}
+                                    ></div>
+                                    <div
+                                        className={`h-2.5 w-2.5 rounded-full ${
+                                            txStatus === "verifying" ||
+                                            txStatus === "complete"
+                                                ? "bg-rose-500"
+                                                : "bg-gray-300"
+                                        }`}
+                                    ></div>
+                                    <div
+                                        className={`h-2.5 w-2.5 rounded-full ${
+                                            txStatus === "complete"
+                                                ? "bg-rose-500"
+                                                : "bg-gray-300"
+                                        }`}
+                                    ></div>
+                                    <div className="absolute left-0 top-1/2 h-0.5 bg-gradient-to-r from-rose-500 to-gray-300 w-full -z-10 transform -translate-y-1/2"></div>
+                                </div>
+                                <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                                    <span>Sign</span>
+                                    <span>Process</span>
+                                    <span>Verify</span>
+                                    <span>Done</span>
+                                </div>
+                            </div>
+
+                            <p className="text-xs text-muted-foreground mt-2">
+                                Please don&apos;t close this window.
                             </p>
                         </div>
                     </>
@@ -298,12 +475,22 @@ const DonateForm = () => {
                                         placeholder="x username"
                                         value={socialLinks.x}
                                         onChange={(e) =>
-                                            setSocialLinks((prev) => ({
-                                                ...prev,
-                                                x: e.target.value,
-                                            }))
+                                            handleSocialInputChange(
+                                                "x",
+                                                e.target.value
+                                            )
+                                        }
+                                        className={
+                                            socialErrors.x
+                                                ? "border-red-500"
+                                                : ""
                                         }
                                     />
+                                    {socialErrors.x && (
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {socialErrors.x}
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="grid gap-2">
                                     <label
@@ -317,12 +504,22 @@ const DonateForm = () => {
                                         placeholder="github username"
                                         value={socialLinks.github}
                                         onChange={(e) =>
-                                            setSocialLinks((prev) => ({
-                                                ...prev,
-                                                github: e.target.value,
-                                            }))
+                                            handleSocialInputChange(
+                                                "github",
+                                                e.target.value
+                                            )
+                                        }
+                                        className={
+                                            socialErrors.github
+                                                ? "border-red-500"
+                                                : ""
                                         }
                                     />
+                                    {socialErrors.github && (
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {socialErrors.github}
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="grid gap-2">
                                     <label
@@ -336,12 +533,22 @@ const DonateForm = () => {
                                         placeholder="farcaster username"
                                         value={socialLinks.farcaster}
                                         onChange={(e) =>
-                                            setSocialLinks((prev) => ({
-                                                ...prev,
-                                                farcaster: e.target.value,
-                                            }))
+                                            handleSocialInputChange(
+                                                "farcaster",
+                                                e.target.value
+                                            )
+                                        }
+                                        className={
+                                            socialErrors.farcaster
+                                                ? "border-red-500"
+                                                : ""
                                         }
                                     />
+                                    {socialErrors.farcaster && (
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {socialErrors.farcaster}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -355,6 +562,7 @@ const DonateForm = () => {
                             <Button
                                 className="bg-rose-500 hover:bg-rose-600"
                                 onClick={handleSocialLinksSubmit}
+                                disabled={hasSocialErrors}
                             >
                                 Save
                             </Button>
