@@ -34,6 +34,9 @@ const donateBodySchema = donationZodSchema
 
 type DonateBody = z.infer<typeof donateBodySchema>;
 
+const contactSupportMessage =
+    " Please contact @0xAdek on x if the issue persists.";
+
 export async function POST(req: NextRequest) {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -56,7 +59,7 @@ export async function POST(req: NextRequest) {
         if (existingDonation) {
             await session.abortTransaction();
             return error(
-                "This transaction has already been recorded as a donation. Please use a different transaction.",
+                `This transaction has already been recorded as a donation. Please use a different transaction.${contactSupportMessage}`,
                 400
             );
         }
@@ -66,7 +69,7 @@ export async function POST(req: NextRequest) {
         if (!networkDetails.rpc.length) {
             await session.abortTransaction();
             return error(
-                `The network (ID: ${networkId}) is not supported or lacks RPC configuration. Please try a different network.`,
+                `The network (ID: ${networkId}) is not supported or lacks RPC configuration. Please try a different network.${contactSupportMessage}`,
                 400
             );
         }
@@ -76,7 +79,7 @@ export async function POST(req: NextRequest) {
         if (workingRPCURLs.length === 0) {
             await session.abortTransaction();
             return error(
-                `Network connectivity issue with ${networkDetails.name}. We're unable to verify your transaction at this time. Please try again later.`,
+                `Network connectivity issue with ${networkDetails.name}. We're unable to verify your transaction at this time. Please try again later.${contactSupportMessage}`,
                 400
             );
         }
@@ -91,7 +94,7 @@ export async function POST(req: NextRequest) {
         if (!status || status === "reverted") {
             await session.abortTransaction();
             return error(
-                "The transaction was reverted or failed on the blockchain. Please provide a successful transaction.",
+                `The transaction was reverted or failed on the blockchain. Please provide a successful transaction.${contactSupportMessage}`,
                 400
             );
         }
@@ -106,7 +109,7 @@ export async function POST(req: NextRequest) {
         ) {
             await session.abortTransaction();
             return error(
-                `This transaction wasn't sent to our faucet address (${process.env.NEXT_PUBLIC_FAUCET_ADDRESS}). Please use a transaction that was sent to our faucet.`,
+                `This transaction wasn't sent to our faucet address (${process.env.NEXT_PUBLIC_FAUCET_ADDRESS}). Please use a transaction that was sent to our faucet.${contactSupportMessage}`,
                 400
             );
         }
@@ -115,7 +118,7 @@ export async function POST(req: NextRequest) {
         if (BigInt(tx.value) === BigInt(0)) {
             await session.abortTransaction();
             return error(
-                "The transaction didn't include any ETH. Please provide a transaction that sends ETH to our faucet.",
+                `The transaction didn't include any ETH. Please provide a transaction that sends ETH to our faucet.${contactSupportMessage}`,
                 400
             );
         }
@@ -165,14 +168,14 @@ export async function POST(req: NextRequest) {
                 .map((e) => `${e.path.join(".")}: ${e.message}`)
                 .join(", ");
             return error(
-                `Please check your donation details: ${errorMessage}`,
+                `Please check your donation details: ${errorMessage}.${contactSupportMessage}`,
                 400
             );
         }
         return error(
             err instanceof Error
-                ? `Something went wrong with your donation: ${err.message}. Please try again or contact @0xadek on x if the issue persists.`
-                : "An unexpected error occurred while processing your donation. Please try again later.",
+                ? `Something went wrong with your donation: ${err.message}.${contactSupportMessage}`
+                : `An unexpected error occurred while processing your donation.${contactSupportMessage}`,
             500
         );
     } finally {
