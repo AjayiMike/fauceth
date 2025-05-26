@@ -2,6 +2,8 @@ import { useQueryClient, useQueries } from "@tanstack/react-query";
 import { getETHBalance } from "@/lib/networks";
 import { INetwork } from "@/types/network";
 import { useEffect, useMemo } from "react";
+import { env } from "@/config/env";
+import { Address } from "viem";
 
 /**
  * A hook that manages network balances with aggressive caching
@@ -9,7 +11,6 @@ import { useEffect, useMemo } from "react";
  */
 export const useNetworkBalances = (networks: INetwork[]) => {
     const queryClient = useQueryClient();
-    const faucetAddress = process.env.NEXT_PUBLIC_FAUCET_ADDRESS as string;
 
     // Prefetch all network balances when networks change
     useEffect(() => {
@@ -41,7 +42,7 @@ export const useNetworkBalances = (networks: INetwork[]) => {
                 queryFn: async () => {
                     try {
                         return await getETHBalance(
-                            faucetAddress as `0x${string}`,
+                            env.FAUCET_ADDRESS as Address,
                             network.rpc,
                             network.nativeCurrency?.decimals || 18
                         );
@@ -57,7 +58,7 @@ export const useNetworkBalances = (networks: INetwork[]) => {
                 gcTime: 24 * 60 * 60 * 1000, // Keep in cache for 24 hours
             });
         });
-    }, [networks, queryClient, faucetAddress]);
+    }, [networks, queryClient]);
 
     // Create a map of network IDs to their indices for efficient lookup
     const networkIndexMap = useMemo(() => {
@@ -74,7 +75,7 @@ export const useNetworkBalances = (networks: INetwork[]) => {
             queryKey: ["networkBalance", network.chainId],
             queryFn: async () => {
                 return await getETHBalance(
-                    faucetAddress as `0x${string}`,
+                    env.FAUCET_ADDRESS as Address,
                     network.rpc,
                     network.nativeCurrency?.decimals || 18
                 );

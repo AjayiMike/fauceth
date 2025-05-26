@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import useWalletClient from "./useWalletClient";
 import { Address, Chain, parseEther } from "viem";
 import { useConnection } from "@/providers/ConnectionProvider";
+import { env } from "@/config/env";
 const useDonate = () => {
     const { account } = useConnection();
     const walletClient = useWalletClient();
@@ -17,7 +18,7 @@ const useDonate = () => {
                 account: account as Address,
                 args: [],
                 value: parseEther(amount),
-                to: process.env.NEXT_PUBLIC_FAUCET_ADDRESS as Address,
+                to: env.FAUCET_ADDRESS as Address,
             });
         },
         [account, walletClient]

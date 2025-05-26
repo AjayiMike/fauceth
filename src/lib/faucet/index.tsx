@@ -1,3 +1,4 @@
+import { env } from "@/config/env";
 import {
     Address,
     Chain,
@@ -16,9 +17,9 @@ import { privateKeyToAccount } from "viem/accounts";
  * @returns The daily claim amount.
  */
 export const calculateDailyClaimAmount = (faucetBalance: number): number => {
-    const MAX_CLAIM = Number(process.env.NEXT_PUBLIC_MAX_CLAIM);
-    const MIN_BALANCE = Number(process.env.NEXT_PUBLIC_MIN_BALANCE);
-    const OPTIMAL_BALANCE = Number(process.env.NEXT_PUBLIC_OPTIMAL_BALANCE);
+    const MAX_CLAIM = Number(env.MAX_CLAIM);
+    const MIN_BALANCE = Number(env.MIN_BALANCE);
+    const OPTIMAL_BALANCE = Number(env.OPTIMAL_BALANCE);
 
     // If balance is below minimum, return 0
     if (faucetBalance < MIN_BALANCE) {
@@ -46,9 +47,7 @@ export const sendETH = async (
 ) => {
     const walletClient = createWalletClient({
         chain: chain,
-        account: privateKeyToAccount(
-            `0x${process.env.FAUCET_PRIVATE_KEY}` as Hex
-        ),
+        account: privateKeyToAccount(`0x${env.FAUCET_PK}` as Hex),
         transport: fallback(rpcUrls.map((url) => http(url))),
     });
 
@@ -68,14 +67,12 @@ export const calculateSendETHTxHash = async (
 ) => {
     const walletClient = createWalletClient({
         chain: chain,
-        account: privateKeyToAccount(
-            `0x${process.env.FAUCET_PRIVATE_KEY}` as Hex
-        ),
+        account: privateKeyToAccount(`0x${env.FAUCET_PK}` as Hex),
         transport: fallback(rpcUrls.map((url) => http(url))),
     });
 
     const request = await walletClient.prepareTransactionRequest({
-        account: process.env.NEXT_PUBLIC_FAUCET_ADDRESS as Address,
+        account: env.FAUCET_ADDRESS as Address,
         to: address,
         value: amount,
     });

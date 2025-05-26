@@ -18,6 +18,7 @@ import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { env } from "@/config/env";
 
 const RequestForm = ({
     balance,
@@ -240,10 +241,7 @@ const RequestForm = ({
                             </div>
 
                             <HCaptcha
-                                sitekey={
-                                    process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY ||
-                                    ""
-                                }
+                                sitekey={env.HCAPTCHA_SITE_KEY!}
                                 onExpire={onHCaptchaExpire}
                                 onError={onHCaptchaError}
                                 onVerify={setHCaptchaToken}

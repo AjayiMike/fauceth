@@ -1,4 +1,6 @@
+import { env } from "@/config/env";
 import { getETHBalance } from "@/lib/networks";
+import { Address } from "viem";
 
 // Global cache for network balances
 const balanceCache = new Map<
@@ -26,8 +28,6 @@ export const getNetworkBalance = async (
     isLoading: boolean;
     isError: boolean;
 }> => {
-    const faucetAddress = process.env.NEXT_PUBLIC_FAUCET_ADDRESS as string;
-
     // Check if we have a valid cached value
     const cachedValue = balanceCache.get(chainId);
     const now = Date.now();
@@ -51,7 +51,7 @@ export const getNetworkBalance = async (
     try {
         // Fetch the balance
         const balance = await getETHBalance(
-            faucetAddress as `0x${string}`,
+            env.FAUCET_ADDRESS as Address,
             rpcUrls,
             decimals
         );

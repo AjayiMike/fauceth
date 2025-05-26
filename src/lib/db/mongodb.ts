@@ -1,13 +1,12 @@
 import mongoose from "mongoose";
 import { User, IpAddress, Donation, Request } from "./models";
+import { env } from "@/config/env";
 
-if (!process.env.MONGODB_URI) {
+if (!env.MONGODB_URI) {
     throw new Error(
         "Please define the MONGODB_URI environment variable inside .env(.*) file"
     );
 }
-
-const MONGODB_URI = process.env.MONGODB_URI;
 
 let isConnected = false;
 
@@ -17,8 +16,8 @@ export async function connectDB() {
     }
 
     try {
-        await mongoose.connect(MONGODB_URI, {
-            dbName: process.env.DB_NAME,
+        await mongoose.connect(env.MONGODB_URI!, {
+            dbName: env.DB_NAME,
         });
 
         isConnected = true;

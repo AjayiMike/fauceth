@@ -23,6 +23,7 @@ import { sepolia } from "viem/chains";
 import { getPassportScore } from "@/lib/passport";
 import { verifyHCaptcha } from "@/lib/captcha/hCaptcha";
 import { formatDistanceToNow } from "date-fns";
+import { env } from "@/config/env";
 
 const requestBodySchema = z.object({
     networkId: z.number().int().positive(),
@@ -65,8 +66,8 @@ export async function POST(req: NextRequest) {
 
         const hCaptchaResponse = await verifyHCaptcha(
             captchaToken,
-            process.env.HCAPTCHA_SECRET as string,
-            process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY as string,
+            env.HCAPTCHA_SECRET as string,
+            env.HCAPTCHA_SITE_KEY as string,
             ipAddress
         );
 
@@ -119,10 +120,7 @@ export async function POST(req: NextRequest) {
                 // For existing users, check if they have sufficient donations
                 const hasSufficientDonations =
                     totalDonations >=
-                    Number(
-                        process.env
-                            .NEXT_PUBLIC_MIN_DONATION_REQUIRED_FOR_VERIFICATION
-                    );
+                    Number(env.MIN_DONATION_REQUIRED_FOR_VERIFICATION);
 
                 // If they haven't donated enough, check their Passport score
                 if (!hasSufficientDonations) {
@@ -133,7 +131,7 @@ export async function POST(req: NextRequest) {
                     // If both verification methods fail, return error with both options
                     if (!meetsThreshold) {
                         return error(
-                            `Verification required: Your donations (${totalDonations} ETH) are below our threshold of ${process.env.NEXT_PUBLIC_MIN_DONATION_REQUIRED_FOR_VERIFICATION} ETH, and your Gitcoin Passport score (${score}) is below our required threshold of ${process.env.PASSPORT_SCORE_THRESHOLD}. Please either make a donation or increase your Passport score at https://app.passport.xyz to use the faucet.`,
+                            `Verification required: Your donations (${totalDonations} ETH) are below our threshold of ${env.MIN_DONATION_REQUIRED_FOR_VERIFICATION} ETH, and your Gitcoin Passport score (${score}) is below our required threshold of ${env.PASSPORT_SCORE_THRESHOLD}. Please either make a donation or increase your Passport score at https://app.passport.xyz to use the faucet.`,
                             403
                         );
                     }
@@ -148,7 +146,7 @@ export async function POST(req: NextRequest) {
 
                 if (!meetsThreshold) {
                     return error(
-                        `Your Gitcoin Passport score (${score}) needs to be at least ${process.env.PASSPORT_SCORE_THRESHOLD} to use this faucet. Please visit https://app.passport.xyz to increase your score, or consider making a small donation instead.`,
+                        `Your Gitcoin Passport score (${score}) needs to be at least ${env.PASSPORT_SCORE_THRESHOLD} to use this faucet. Please visit https://app.passport.xyz to increase your score, or consider making a small donation instead.`,
                         403
                     );
                 }
@@ -168,7 +166,7 @@ export async function POST(req: NextRequest) {
 
             // Get faucet's ETH balance
             const balance = await getETHBalance(
-                process.env.NEXT_PUBLIC_FAUCET_ADDRESS as Address,
+                env.FAUCET_ADDRESS as Address,
                 workingRPCs
             );
 

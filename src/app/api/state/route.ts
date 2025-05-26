@@ -1,3 +1,4 @@
+import { env } from "@/config/env";
 import { error, success, validateQueryParams } from "@/lib/api/response";
 import { NetworkFaucetState } from "@/lib/api/types";
 import { calculateDailyClaimAmount } from "@/lib/faucet";
@@ -11,8 +12,7 @@ const querySchema = z.object({
     networkId: z.string().transform(Number).pipe(z.number().int().positive()),
 });
 
-const FAUCET_ADDRESS = process.env.NEXT_PUBLIC_FAUCET_ADDRESS;
-if (!FAUCET_ADDRESS) {
+if (!env.FAUCET_ADDRESS) {
     throw new Error(
         "NEXT_PUBLIC_FAUCET_ADDRESS environment variable is not set"
     );
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
 
         // Get faucet balance
         const faucetBalance = await getETHBalance(
-            FAUCET_ADDRESS as Address,
+            env.FAUCET_ADDRESS as Address,
             workingRPCURLs
         );
 

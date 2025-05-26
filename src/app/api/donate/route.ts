@@ -17,6 +17,7 @@ import {
 import mongoose from "mongoose";
 import { DonateResponse } from "@/lib/api/types";
 import { User } from "@/lib/db/models/user";
+import { env } from "@/config/env";
 
 const donateBodySchema = donationZodSchema
     .pick({
@@ -102,14 +103,11 @@ export async function POST(req: NextRequest) {
         // verify transaction is to faucet
         if (
             !tx.to ||
-            !isMatchingAddress(
-                tx.to,
-                process.env.NEXT_PUBLIC_FAUCET_ADDRESS as Address
-            )
+            !isMatchingAddress(tx.to, env.FAUCET_ADDRESS as Address)
         ) {
             await session.abortTransaction();
             return error(
-                `This transaction wasn't sent to our faucet address (${process.env.NEXT_PUBLIC_FAUCET_ADDRESS}). Please use a transaction that was sent to our faucet.${contactSupportMessage}`,
+                `This transaction wasn't sent to our faucet address (${env.FAUCET_ADDRESS}). Please use a transaction that was sent to our faucet.${contactSupportMessage}`,
                 400
             );
         }
