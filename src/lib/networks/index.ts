@@ -273,7 +273,7 @@ export const isTestnet = (chain: ChainidNetworkAPIResponseType) => {
 export const hasPublicRPCs = (network: ChainidNetworkAPIResponseType) => {
     return (
         network.rpc.length > 0 &&
-        !network.rpc.every((r) => r.includes("${")) &&
+        !network.rpc.every((r) => r.includes("$")) &&
         !network.rpc.every((r) => r.startsWith("wss://"))
     );
 };

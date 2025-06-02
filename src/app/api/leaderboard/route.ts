@@ -33,19 +33,47 @@ export async function GET(req: NextRequest) {
             const limit = Math.min(Number(searchParams.get("limit")) || 10, 50);
 
             let dateFilter = {};
+            const now = new Date();
 
             switch (period) {
                 case "week":
-                    const weekAgo = new Date();
-                    weekAgo.setDate(weekAgo.getDate() - 7);
-                    weekAgo.setHours(0, 0, 0, 0);
-                    dateFilter = { createdAt: { $gte: weekAgo } };
+                    // Get current week boundaries in UTC
+                    const currentDay = now.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
+                    const startOfWeek = new Date(
+                        Date.UTC(
+                            now.getUTCFullYear(),
+                            now.getUTCMonth(),
+                            now.getUTCDate() - currentDay,
+                            0,
+                            0,
+                            0,
+                            0
+                        )
+                    );
+                    dateFilter = {
+                        createdAt: {
+                            $gte: startOfWeek,
+                        },
+                    };
                     break;
                 case "month":
-                    const monthAgo = new Date();
-                    monthAgo.setDate(monthAgo.getDate() - 30);
-                    monthAgo.setHours(0, 0, 0, 0);
-                    dateFilter = { createdAt: { $gte: monthAgo } };
+                    // Get current month boundaries in UTC
+                    const startOfMonth = new Date(
+                        Date.UTC(
+                            now.getUTCFullYear(),
+                            now.getUTCMonth(),
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        )
+                    );
+                    dateFilter = {
+                        createdAt: {
+                            $gte: startOfMonth,
+                        },
+                    };
                     break;
             }
 
