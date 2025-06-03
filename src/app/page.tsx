@@ -63,7 +63,7 @@ export default function Home() {
                                         cooldownPeriod={
                                             cooldownDuration ?? undefined
                                         }
-                                        networkId={selectedNetwork?.chainId}
+                                        network={selectedNetwork}
                                         isBalanceLoading={isLoading}
                                     />
                                 </TabsContent>

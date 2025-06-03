@@ -14,12 +14,12 @@ import {
     filterWorkingRPCs,
     getETHBalance,
     getNetworkInfo,
+    networkInfoToViemChain,
 } from "@/lib/networks";
 import { calculateDailyClaimAmount, sendETH } from "@/lib/faucet";
 import { RequestFaucetResponse } from "@/lib/api/types";
 import { withTransaction } from "@/lib/db/with-db";
 import { parseEther } from "viem";
-import { sepolia } from "viem/chains";
 import { getPassportScore } from "@/lib/passport";
 import { verifyHCaptcha } from "@/lib/captcha/hCaptcha";
 import { formatDistanceToNow } from "date-fns";
@@ -191,7 +191,7 @@ export async function POST(req: NextRequest) {
                 checkSummedAddress,
                 parseEther(claimAmount.toString()),
                 workingRPCs,
-                sepolia
+                networkInfoToViemChain(networkDetails)
             );
 
             // Record request
@@ -206,6 +206,7 @@ export async function POST(req: NextRequest) {
 
             return success<RequestFaucetResponse>({
                 success: true,
+                amount: claimAmount,
                 txHash,
             });
         });

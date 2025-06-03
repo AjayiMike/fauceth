@@ -1,12 +1,11 @@
 export interface RequestFaucetResponse {
     success: boolean;
-    txHash?: string;
-    error?: string;
+    amount: number;
+    txHash: string;
 }
 
 export interface DonateResponse {
     success: boolean;
-    error?: string;
     isFirstTimeDonor?: boolean;
 }
 
