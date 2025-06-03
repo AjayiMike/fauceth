@@ -18,15 +18,20 @@ import { NetworkIcon } from "./NetworkIcon";
 import { useNetworksStore } from "@/lib/store/networksStore";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import { getNetworkBalance } from "@/lib/cache/networkBalances";
+import { INetwork } from "@/types/network";
 
 const NetworkDropdown = () => {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
-    const { networks, selectedNetwork, setSelectedNetwork, isLoading } =
-        useNetworksStore();
+    const {
+        networks,
+        selectedNetwork,
+        setSelectedNetwork,
+        isLoading: isLoadingNetworks,
+    } = useNetworksStore();
     const [parentNode, setParentNode] = useState<HTMLDivElement | null>(null);
 
     // Get status for selected network
@@ -51,31 +56,93 @@ const NetworkDropdown = () => {
         refetchInterval: 3000,
     });
 
+    // Fetch balances for all networks in the list
+    const balanceQueries = useQueries({
+        queries: isLoadingNetworks
+            ? []
+            : networks.map((network) => ({
+                  queryKey: [
+                      "network-balance",
+                      network.chainId,
+                      network.rpc?.join(","),
+                      network.nativeCurrency?.decimals,
+                  ],
+                  queryFn: () =>
+                      getNetworkBalance(
+                          network.chainId,
+                          network.rpc,
+                          network.nativeCurrency?.decimals || 18
+                      ),
+                  enabled: Boolean(
+                      network.chainId &&
+                          network.rpc &&
+                          network.rpc.length > 0 &&
+                          !isLoadingNetworks
+                  ),
+                  staleTime: 30000,
+                  refetchInterval: 60000,
+              })),
+    });
+
+    const networksWithBalances = useMemo(() => {
+        if (isLoadingNetworks) return [];
+        return networks.map((network, index) => {
+            const queryResult = balanceQueries[index];
+            return {
+                ...network,
+                balance: queryResult?.data?.balance ?? null,
+                isBalanceLoading: queryResult?.isLoading ?? true,
+                isBalanceError: queryResult?.isError ?? false,
+            };
+        });
+    }, [networks, isLoadingNetworks, balanceQueries]);
+
     // Handle dropdown open/close
     const handleOpenChange = useCallback((isOpen: boolean) => {
         setOpen(isOpen);
     }, []);
 
-    // Filter networks based on search term
-    const filteredNetworks = useMemo(() => {
-        if (!debouncedSearchTerm) return networks;
+    // Filter networks based on search term and sort by balance
+    const filteredAndSortedNetworks = useMemo(() => {
+        let processedNetworks = networksWithBalances;
 
-        const searchLower = debouncedSearchTerm.toLowerCase().trim();
+        if (debouncedSearchTerm) {
+            const searchLower = debouncedSearchTerm.toLowerCase().trim();
+            processedNetworks = processedNetworks.filter((network) => {
+                const nameMatch = network.name
+                    .toLowerCase()
+                    .includes(searchLower);
+                const chainIdMatch = network.chainId
+                    .toString()
+                    .includes(debouncedSearchTerm);
+                return nameMatch || chainIdMatch;
+            });
+        }
 
-        const filtered = networks.filter((network) => {
-            const nameMatch = network.name.toLowerCase().includes(searchLower);
-            const chainIdMatch = network.chainId
-                .toString()
-                .includes(debouncedSearchTerm);
+        const getSortPriority = (network: (typeof networksWithBalances)[0]) => {
+            if (network.isBalanceLoading) return 3;
+            if (network.isBalanceError || network.balance === null) return 2;
+            return 1;
+        };
 
-            return nameMatch || chainIdMatch;
+        return [...processedNetworks].sort((a, b) => {
+            const priorityA = getSortPriority(a);
+            const priorityB = getSortPriority(b);
+
+            if (priorityA !== priorityB) {
+                return priorityA - priorityB;
+            }
+
+            if (priorityA === 1 && a.balance !== null && b.balance !== null) {
+                return b.balance - a.balance;
+            }
+
+            return a.name.localeCompare(b.name);
         });
-
-        return filtered;
-    }, [debouncedSearchTerm, networks]);
+    }, [debouncedSearchTerm, networksWithBalances]);
 
     const rowVirtualizer = useVirtualizer({
-        count: filteredNetworks.length,
+        count: filteredAndSortedNetworks.length,
         getScrollElement: () => parentNode,
         estimateSize: () => 60,
         overscan: 10,
@@ -106,7 +173,7 @@ const NetworkDropdown = () => {
                                 {getStatusIcon({
                                     isLoading: balanceLoading,
                                     isError,
-                                    data,
+                                    balance: data?.balance ?? 0,
                                 })}
                             </div>
                         </>
@@ -133,11 +200,11 @@ const NetworkDropdown = () => {
                         className="h-[300px] overflow-auto"
                     >
                         <CommandGroup>
-                            {isLoading ? (
+                            {isLoadingNetworks ? (
                                 <div className="p-2 text-sm text-muted-foreground">
                                     Loading networks...
                                 </div>
-                            ) : filteredNetworks.length === 0 ? (
+                            ) : filteredAndSortedNetworks.length === 0 ? (
                                 <div className="p-2 text-sm text-muted-foreground">
                                     No networks found.
                                 </div>
@@ -150,8 +217,10 @@ const NetworkDropdown = () => {
                                     }}
                                 >
                                     {items.map((virtualRow) => {
-                                        const network =
-                                            filteredNetworks[virtualRow.index];
+                                        const networkWithBalance =
+                                            filteredAndSortedNetworks[
+                                                virtualRow.index
+                                            ];
                                         return (
                                             <div
                                                 key={virtualRow.key}
@@ -168,15 +237,29 @@ const NetworkDropdown = () => {
                                                     ref={
                                                         rowVirtualizer.measureElement
                                                     }
-                                                    network={network}
+                                                    network={networkWithBalance}
                                                     isSelected={
                                                         selectedNetwork?.chainId ===
-                                                        network.chainId
+                                                        networkWithBalance.chainId
                                                     }
-                                                    onSelect={(network) => {
-                                                        setSelectedNetwork(
-                                                            network
-                                                        );
+                                                    onSelect={(
+                                                        selectedNwFromItem
+                                                    ) => {
+                                                        const originalNetwork =
+                                                            networks.find(
+                                                                (n) =>
+                                                                    n.chainId ===
+                                                                    selectedNwFromItem.chainId
+                                                            );
+                                                        if (originalNetwork) {
+                                                            setSelectedNetwork(
+                                                                originalNetwork
+                                                            );
+                                                        } else {
+                                                            setSelectedNetwork(
+                                                                selectedNwFromItem as INetwork
+                                                            );
+                                                        }
                                                         setOpen(false);
                                                     }}
                                                 />

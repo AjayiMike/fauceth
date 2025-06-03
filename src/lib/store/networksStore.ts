@@ -3,6 +3,8 @@ import { INetwork } from "@/types/network";
 import { sepolia } from "viem/chains";
 import { prefetchNetworkBalances } from "@/lib/cache/networkBalances";
 
+const SELECTED_NETWORK_CHAIN_ID_KEY = "selectedNetworkChainId";
+
 interface NetworksState {
     networks: INetwork[];
     selectedNetwork: INetwork | null;
@@ -10,19 +12,44 @@ interface NetworksState {
     error: string | null;
     fetchNetworks: () => Promise<void>;
     setSelectedNetwork: (network: INetwork) => void;
+    _hasHydrated: boolean; // To track if we've attempted to load from localStorage
 }
 
 type NetworksStore = NetworksState;
 
+// Helper to get initial selected network
+const getInitialSelectedNetwork = (networks: INetwork[]): INetwork | null => {
+    if (typeof window !== "undefined" && networks.length > 0) {
+        const storedChainId = localStorage.getItem(
+            SELECTED_NETWORK_CHAIN_ID_KEY
+        );
+        if (storedChainId) {
+            const chainId = parseInt(storedChainId, 10);
+            const persistedNetwork = networks.find(
+                (n) => n.chainId === chainId
+            );
+            if (persistedNetwork) return persistedNetwork;
+        }
+    }
+    // Default selection logic
+    if (networks.length > 0) {
+        const sepoliaNetwork = networks.find(
+            (network: INetwork) => network.chainId === sepolia.id
+        );
+        return sepoliaNetwork || networks[0];
+    }
+    return null;
+};
+
 export const useNetworksStore = create<NetworksStore>((set, get) => ({
     networks: [],
-    selectedNetwork: null,
+    selectedNetwork: null, // Initialized to null, will be set by fetchNetworks
     isLoading: false,
     error: null,
+    _hasHydrated: false, // Initially not hydrated
 
     fetchNetworks: async () => {
-        // If networks are already loaded, don't fetch again
-        if (get().networks.length > 0) return;
+        if (get().networks.length > 0 && get()._hasHydrated) return; // Avoid refetch if already loaded & hydrated
 
         set({ isLoading: true, error: null });
 
@@ -34,16 +61,15 @@ export const useNetworksStore = create<NetworksStore>((set, get) => ({
 
             const data = await response.json();
             if (data.success && data.data) {
-                const networks = data.data;
-                set({ networks });
+                const networks = data.data as INetwork[];
+                const initialSelected = getInitialSelectedNetwork(networks);
 
-                // Set sepolia or the first network as selected by default
-                if (networks.length > 0) {
-                    const sepoliaNetwork = networks.find(
-                        (network: INetwork) => network.chainId === sepolia.id
-                    );
-                    set({ selectedNetwork: sepoliaNetwork || networks[0] });
-                }
+                set({
+                    networks,
+                    selectedNetwork: initialSelected,
+                    isLoading: false,
+                    _hasHydrated: true, // Mark as hydrated after attempting to load from localStorage via getInitialSelectedNetwork
+                });
 
                 // Prefetch network balances in the background
                 prefetchNetworkBalances(networks).catch((error) => {
@@ -54,13 +80,19 @@ export const useNetworksStore = create<NetworksStore>((set, get) => ({
             console.debug("Error fetching networks:", error);
             set({
                 error: error instanceof Error ? error.message : "Unknown error",
+                isLoading: false,
+                _hasHydrated: true, // Also mark as hydrated on error to prevent re-attempts if fetch fails
             });
-        } finally {
-            set({ isLoading: false });
         }
     },
 
     setSelectedNetwork: (network: INetwork) => {
         set({ selectedNetwork: network });
+        if (typeof window !== "undefined") {
+            localStorage.setItem(
+                SELECTED_NETWORK_CHAIN_ID_KEY,
+                network.chainId.toString()
+            );
+        }
     },
 }));
