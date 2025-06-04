@@ -24,16 +24,16 @@ export default function Home() {
     return (
         <div className="min-h-screen flex flex-col">
             <Header />
-            <main className="flex-1">
-                <div className="container mx-auto px-4 py-8 space-y-8">
+            <main className="flex-1 w-full overflow-x-hidden">
+                <div className="container mx-auto px-4 py-8 space-y-8 w-full">
                     <FaucetInfo
                         balance={balance ?? undefined}
                         faucetAmount={dropAmount ?? undefined}
                         cooldownPeriod={cooldownDuration ?? undefined}
                     />
-                    <div className="grid grid-cols-12 gap-8 w-full">
-                        <div className="col-span-12 lg:col-span-8 w-full">
-                            <Tabs defaultValue="request" className="w-full">
+                    <div className="grid grid-cols-12 gap-4 md:gap-8">
+                        <div className="col-span-12 lg:col-span-8">
+                            <Tabs defaultValue="request">
                                 <TabsList className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
                                     <TabsTrigger
                                         value="request"
@@ -76,7 +76,7 @@ export default function Home() {
                             </div>
                         </div>
                         <aside
-                            className="col-span-12 lg:col-span-4 w-full"
+                            className="col-span-12 lg:col-span-4"
                             aria-label="Top Donors Leaderboard"
                         >
                             <Leaderboard />

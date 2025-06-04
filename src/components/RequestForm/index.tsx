@@ -31,6 +31,7 @@ import {
 } from "../ui/dialog";
 import { INetwork } from "@/types/network";
 import useCopyClipboard from "@/hooks/useCopyClipboard";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 const RequestForm = ({
     balance,
@@ -53,6 +54,8 @@ const RequestForm = ({
         amount: number;
         txHash: string;
     } | null>(null);
+
+    const isXsScreen = useMediaQuery("(max-width: 350px)");
     const currency = network?.nativeCurrency.symbol;
     const explorer = useMemo(() => {
         if (!network?.explorers || network.explorers.length === 0) return null;
@@ -287,6 +290,7 @@ const RequestForm = ({
                                 onError={onHCaptchaError}
                                 onVerify={setHCaptchaToken}
                                 ref={hCaptchaRef}
+                                size={isXsScreen ? "compact" : "normal"}
                             />
 
                             <Button

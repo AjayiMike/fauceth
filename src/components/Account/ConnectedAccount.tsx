@@ -23,7 +23,7 @@ export const ConnectedAccount = () => {
                         alt={connectedProvider?.info.name || ""}
                         width={20}
                         height={20}
-                        className="w-5 h-5 rounded"
+                        className="w-5 h-5 rounded hidden sm:block"
                     />
                     <span>{shortenedAddress}</span>
                 </Button>

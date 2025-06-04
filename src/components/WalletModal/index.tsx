@@ -41,7 +41,7 @@ const WalletModal = () => {
                             variant="outline"
                             className="bg-rose-50 hover:bg-rose-100 border-rose-200 text-rose-600"
                         >
-                            <Wallet className="w-4 h-4 mr-2" />
+                            <Wallet className="w-4 h-4 mr-2 hidden sm:block" />
                             <span>Connect Wallet</span>
                         </Button>
                     </DialogTrigger>

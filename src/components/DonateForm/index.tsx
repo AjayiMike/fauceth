@@ -1,9 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Heart, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { Heart, AlertCircle, CheckCircle2, Loader2, Info } from "lucide-react";
 import { motion } from "framer-motion";
-import { Alert, AlertDescription } from "../ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import NumericalInput from "../NumericalInput";
 import { useState, useEffect } from "react";
 import useBalance from "@/hooks/useBalance";
@@ -38,7 +38,8 @@ type TransactionStatus =
     | "complete";
 
 const DonateForm = () => {
-    const { isConnected, chainId, account } = useConnection();
+    const { isConnected, chainId, account, handleSwitchChain } =
+        useConnection();
     const { balance, formattedBalance, isLoading } = useBalance();
     const { networks, selectedNetwork } = useNetworksStore();
     const donate = useDonate();
@@ -67,7 +68,6 @@ const DonateForm = () => {
     // Check if current chain is supported and get current network info
     const currentNetwork = networks.find((n) => n.chainId === chainId);
     const isUnsupportedChain = isConnected && chainId && !currentNetwork;
-    const targetNetwork = selectedNetwork;
 
     // Log current step when it changes
     useEffect(() => {
@@ -144,13 +144,12 @@ const DonateForm = () => {
 
             if (insufficientBalance) {
                 toast.error(
-                    `You need ${displayNumber(
-                        amount,
-                        3
-                    )} ETH to donate. Your balance: ${displayNumber(
+                    `You need ${displayNumber(amount, 3)} ${
+                        currentNetwork?.nativeCurrency.symbol
+                    } to donate. Your balance: ${displayNumber(
                         formattedBalance,
                         3
-                    )} ETH`
+                    )} ${currentNetwork?.nativeCurrency.symbol}`
                 );
                 return;
             }
@@ -353,7 +352,7 @@ const DonateForm = () => {
                                     Amount
                                 </span>
                                 <span className="font-medium">
-                                    {amount} ETH
+                                    {`${amount} ${currentNetwork?.nativeCurrency.symbol}`}
                                 </span>
                             </div>
                         </div>
@@ -587,7 +586,8 @@ const DonateForm = () => {
                             </div>
                             <div className="text-center space-y-2">
                                 <p className="text-sm font-medium">
-                                    You&apos;ve donated {amount} ETH
+                                    You&apos;ve donated{" "}
+                                    {`${amount} ${currentNetwork?.nativeCurrency.symbol}`}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
                                     Thank you for supporting our community!
@@ -622,7 +622,7 @@ const DonateForm = () => {
                                 className="w-5 h-5 text-rose-500"
                                 aria-hidden="true"
                             />
-                            <h3 className="font-semibold text-lg">
+                            <h3 className="font-semibold text-sm sm:text-base md:text-lg">
                                 Support the Community
                             </h3>
                         </div>
@@ -638,20 +638,25 @@ const DonateForm = () => {
                                     >
                                         Enter donation amount
                                     </label>
-                                    <span>
-                                        Balance:{" "}
-                                        {isLoading ? (
-                                            <span className="inline-flex items-center">
-                                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                                Loading...
-                                            </span>
-                                        ) : (
-                                            `${displayNumber(
-                                                formattedBalance,
-                                                3
-                                            )} ETH`
-                                        )}
-                                    </span>
+                                    {currentNetwork && (
+                                        <span>
+                                            Balance:{" "}
+                                            {isLoading ? (
+                                                <span className="inline-flex items-center">
+                                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                    Loading...
+                                                </span>
+                                            ) : (
+                                                `${displayNumber(
+                                                    formattedBalance,
+                                                    3
+                                                )} ${
+                                                    currentNetwork
+                                                        ?.nativeCurrency.symbol
+                                                }`
+                                            )}
+                                        </span>
+                                    )}
                                 </div>
                                 <NumericalInput
                                     id="donateAmountInput"
@@ -682,11 +687,14 @@ const DonateForm = () => {
                                             `${displayNumber(
                                                 formattedBalance,
                                                 3
-                                            )} ETH`
+                                            )} ${
+                                                selectedNetwork?.nativeCurrency
+                                                    .symbol
+                                            }`
                                         )}
                                     </p>
                                 )}
-                                {!isConnected && (
+                                {!isConnected ? (
                                     <Alert
                                         variant="destructive"
                                         className="bg-yellow-500/10 text-yellow-700 border-yellow-300"
@@ -700,8 +708,7 @@ const DonateForm = () => {
                                             donate.
                                         </AlertDescription>
                                     </Alert>
-                                )}
-                                {isUnsupportedChain && (
+                                ) : isUnsupportedChain ? (
                                     <Alert
                                         variant="destructive"
                                         className="bg-red-500/10 text-red-600 border-red-300"
@@ -712,28 +719,59 @@ const DonateForm = () => {
                                         />
                                         <AlertDescription className="text-red-600/80">
                                             Unsupported network. Please switch
-                                            to a supported network like{" "}
-                                            {targetNetwork?.name || "Sepolia"}.
+                                            to one of the supported network
+                                        </AlertDescription>
+                                    </Alert>
+                                ) : (
+                                    <Alert className="bg-rose-500/10 text-rose-600 border-rose-200">
+                                        <Info className="h-5 w-5 mt-0.5" />
+                                        <AlertTitle>
+                                            {`Support the Faucet on ${currentNetwork?.name}`}
+                                        </AlertTitle>
+                                        <AlertDescription className="text-rose-600/80">
+                                            Your donations help keep this faucet
+                                            running. Any amount of{" "}
+                                            {
+                                                currentNetwork?.nativeCurrency
+                                                    .symbol
+                                            }{" "}
+                                            is appreciated.
                                         </AlertDescription>
                                     </Alert>
                                 )}
                             </div>
 
-                            <Button
-                                className="w-full h-12 text-base font-medium bg-rose-500 hover:bg-rose-600"
-                                size="lg"
-                                disabled={Boolean(
-                                    isError ||
-                                        isLoading ||
-                                        !Boolean(amount) ||
-                                        !isConnected ||
-                                        isUnsupportedChain
-                                )}
-                                onClick={handleDonateClick}
-                            >
-                                Donate
-                                <Heart className="w-5 h-5 ml-2" />
-                            </Button>
+                            {isUnsupportedChain ? (
+                                <Button
+                                    className="w-full h-12 text-base font-medium bg-rose-500 hover:bg-rose-600"
+                                    size="lg"
+                                    onClick={() =>
+                                        handleSwitchChain(
+                                            selectedNetwork?.chainId as number
+                                        )
+                                    }
+                                >
+                                    {`Switch to ${selectedNetwork?.name}`}
+                                </Button>
+                            ) : (
+                                <Button
+                                    className="w-full h-12 text-base font-medium bg-rose-500 hover:bg-rose-600"
+                                    size="lg"
+                                    disabled={Boolean(
+                                        isError ||
+                                            isLoading ||
+                                            !Boolean(amount) ||
+                                            !isConnected ||
+                                            isUnsupportedChain
+                                    )}
+                                    onClick={handleDonateClick}
+                                >
+                                    {currentNetwork
+                                        ? `Donate on ${currentNetwork?.name}`
+                                        : "Donate"}
+                                    <Heart className="w-5 h-5 ml-2" />
+                                </Button>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
