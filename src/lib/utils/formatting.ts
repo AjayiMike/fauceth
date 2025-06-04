@@ -25,23 +25,22 @@ export function displayNumber(
     const absNumber = Math.abs(valueNumber);
 
     let format: string | undefined;
-    let maximumFractionDigits: number | undefined;
-    if (!format) {
-        if (absNumber >= 1.0e6) {
-            format = "0,0.[0000]a";
-        } else if (absNumber >= 1.0e3) {
-            maximumFractionDigits = 2;
-        } else if (absNumber >= 1) {
-            maximumFractionDigits = 4;
-        } else {
-            const repeatCount = Math.abs(
-                Math.floor(Math.log(absNumber) / Math.log(10) + 1)
-            );
-            maximumFractionDigits = Math.max(
-                maximumFractionDP,
-                repeatCount + 1
-            );
-        }
+    let maximumFractionDigits = maximumFractionDP;
+
+    if (absNumber >= 1.0e6) {
+        format = "0,0.[0000]a";
+    } else if (absNumber >= 1.0e3) {
+        maximumFractionDigits = Math.min(maximumFractionDigits, 2);
+    } else if (absNumber >= 1) {
+        maximumFractionDigits = Math.min(maximumFractionDigits, 4);
+    } else {
+        const repeatCount = Math.abs(
+            Math.floor(Math.log(absNumber) / Math.log(10) + 1)
+        );
+        maximumFractionDigits = Math.max(
+            maximumFractionDigits,
+            repeatCount + 1
+        );
     }
 
     if (format) {

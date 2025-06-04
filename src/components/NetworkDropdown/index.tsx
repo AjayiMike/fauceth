@@ -165,7 +165,7 @@ const NetworkDropdown = () => {
                         <>
                             <div className="flex items-center space-x-2">
                                 <NetworkIcon name={selectedNetwork.name} />
-                                <span className="font-medium">
+                                <span className="max-w-[100px] font-medium whitespace-nowrap overflow-hidden overflow-ellipsis">
                                     {selectedNetwork.name}
                                 </span>
                             </div>

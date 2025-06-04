@@ -9,7 +9,7 @@ import { displayNumber, formatDuration } from "@/lib/utils/formatting";
 const FaucetInfoSkeleton = () => {
     return (
         <div className="w-full">
-            <div className="flex flex-wrap gap-4 items-center">
+            <div className="flex gap-4 items-center overflow-x-auto no-scrollbar">
                 {[1, 2, 3].map((index) => (
                     <motion.div
                         key={index}
@@ -34,20 +34,23 @@ const FaucetInfo: FC<{
     balance: number | undefined;
     faucetAmount: number | undefined;
     cooldownPeriod: number | undefined;
-}> = ({ balance, faucetAmount, cooldownPeriod }) => {
+    currency: string;
+}> = ({ balance, faucetAmount, cooldownPeriod, currency }) => {
     const items = useMemo(
         () => [
             {
                 title: "Balance",
-                value: `${balance ? displayNumber(balance, 3) : "0"} ETH`,
+                value: `${
+                    balance ? displayNumber(balance, 1) : "0"
+                } ${currency}`,
                 icon: Coins,
                 color: "text-green-500 bg-green-500/10",
             },
             {
-                title: "Faucet Amount",
+                title: "Drop",
                 value: `${
                     faucetAmount ? displayNumber(faucetAmount, 3) : "0"
-                } ETH`,
+                } ${currency}`,
                 icon: Droplet,
                 color: "text-blue-500 bg-blue-500/10",
             },
@@ -58,7 +61,7 @@ const FaucetInfo: FC<{
                 color: "text-purple-500 bg-purple-500/10",
             },
         ],
-        [balance, faucetAmount, cooldownPeriod]
+        [balance, currency, faucetAmount, cooldownPeriod]
     );
 
     if (
@@ -71,7 +74,7 @@ const FaucetInfo: FC<{
 
     return (
         <div className="w-full">
-            <dl className="flex flex-wrap gap-4 items-center">
+            <dl className="flex gap-4 items-center overflow-x-auto no-scrollbar">
                 {items.map((item, index) => (
                     <motion.div
                         key={item.title}
@@ -84,10 +87,12 @@ const FaucetInfo: FC<{
                             <item.icon className="h-4 w-4" aria-hidden="true" />
                         </div>
                         <div className="flex flex-col">
-                            <dt className="text-xs text-muted-foreground">
+                            <dt className="text-xs text-muted-foreground whitespace-nowrap">
                                 {item.title}
                             </dt>
-                            <dd className="font-medium">{item.value}</dd>
+                            <dd className="font-medium whitespace-nowrap">
+                                {item.value}
+                            </dd>
                         </div>
                     </motion.div>
                 ))}

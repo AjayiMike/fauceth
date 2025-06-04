@@ -30,6 +30,9 @@ export default function Home() {
                         balance={balance ?? undefined}
                         faucetAmount={dropAmount ?? undefined}
                         cooldownPeriod={cooldownDuration ?? undefined}
+                        currency={
+                            selectedNetwork?.nativeCurrency.symbol ?? "ETH"
+                        }
                     />
                     <div className="grid grid-cols-12 gap-4 md:gap-8">
                         <div className="col-span-12 lg:col-span-8">
