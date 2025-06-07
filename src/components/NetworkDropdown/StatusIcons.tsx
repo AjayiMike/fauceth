@@ -1,16 +1,29 @@
 import * as React from "react";
+
 const ActiveIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="-5 -5 24 24"
+        width={24}
+        height={24}
+        viewBox="0 0 24 24"
         {...props}
     >
-        <path
-            fill="currentColor"
-            d="M1 10a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0v-2a1 1 0 0 1 1-1m4-4a1 1 0 0 1 1 1v6a1 1 0 0 1-2 0V7a1 1 0 0 1 1-1m4-4a1 1 0 0 1 1 1v10a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1m4-2a1 1 0 0 1 1 1v12a1 1 0 0 1-2 0V1a1 1 0 0 1 1-1"
-        />
+        <circle cx={12} cy={12} r={0} fill="currentColor">
+            <animate
+                attributeName="r"
+                dur="1.2s"
+                from={0}
+                repeatCount="indefinite"
+                to={11}
+            />
+            <animate
+                attributeName="opacity"
+                dur="1.2s"
+                from={1}
+                repeatCount="indefinite"
+                to={0}
+            />
+        </circle>
     </svg>
 );
 

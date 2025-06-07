@@ -32,10 +32,15 @@ export const getNetworkBalance = async (
     const cachedValue = balanceCache.get(chainId);
     const now = Date.now();
 
-    if (cachedValue && now - cachedValue.timestamp < CACHE_EXPIRATION) {
+    if (
+        cachedValue &&
+        !cachedValue.isLoading &&
+        !cachedValue.isError &&
+        now - cachedValue.timestamp < CACHE_EXPIRATION
+    ) {
         return {
             balance: cachedValue.balance,
-            isLoading: false,
+            isLoading: cachedValue.isLoading,
             isError: cachedValue.isError,
         };
     }

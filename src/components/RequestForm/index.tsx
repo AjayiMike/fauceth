@@ -104,8 +104,8 @@ const RequestForm = ({
                         aria-hidden="true"
                     />
                     <AlertDescription className="text-blue-600/80">
-                        The faucet is currently empty. Please try again later or
-                        consider donating to help keep the faucet running.
+                        The faucet is currently empty. Please check back later
+                        or consider donating to help keep the faucet running.
                     </AlertDescription>
                 </Alert>
             );
