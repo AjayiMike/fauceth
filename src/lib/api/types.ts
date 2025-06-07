@@ -20,6 +20,7 @@ export interface PaginatedResponse<T> {
 export interface RateLimitCheckResponse {
     canRequest: boolean;
     nextAvailableAt?: Date;
+    reason?: "network_specific" | "max_networks";
 }
 
 export interface NetworkFaucetState {

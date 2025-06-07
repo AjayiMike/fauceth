@@ -1,9 +1,11 @@
 import { IUser, IDonation, IRequest } from "./models";
 import { ClientSession } from "mongodb";
 import { User, Request, Donation, IpAddress } from "./models";
+import { env } from "@/config/env";
 
 export async function checkRateLimitForIpAddress(
     ipAddress: string,
+    networkId: number,
     session?: ClientSession
 ) {
     const now = new Date();
@@ -18,28 +20,55 @@ export async function checkRateLimitForIpAddress(
         return { canRequest: true };
     }
 
-    // Check if there's a request within the last 24 hours
-    const recentRequest = await Request.findOne({
+    // First check if there's a request for this specific network within the last 24 hours
+    const recentNetworkRequest = await Request.findOne({
         ipAddressId: ipAddressDoc._id,
+        networkId: networkId,
         createdAt: { $gte: oneDayAgo },
     })
         .sort({ createdAt: -1 })
         .session(session || null);
 
-    if (!recentRequest) {
-        return { canRequest: true };
+    if (recentNetworkRequest) {
+        return {
+            canRequest: false,
+            nextAvailableAt: new Date(
+                recentNetworkRequest.createdAt.getTime() + 24 * 60 * 60 * 1000
+            ),
+            reason: "network_specific",
+        };
     }
 
-    return {
-        canRequest: false,
-        nextAvailableAt: new Date(
-            recentRequest.createdAt.getTime() + 24 * 60 * 60 * 1000
-        ),
-    };
+    // Then check if the IP has requested from 3 different networks already
+    const distinctNetworks = await Request.distinct("networkId", {
+        ipAddressId: ipAddressDoc._id,
+        createdAt: { $gte: oneDayAgo },
+    }).session(session || null);
+
+    if (distinctNetworks.length >= Number(env.DISTINCT_NETWORK_LIMIT)) {
+        // Find earliest request to calculate when a slot will free up
+        const earliestRequest = await Request.findOne({
+            ipAddressId: ipAddressDoc._id,
+            createdAt: { $gte: oneDayAgo },
+        })
+            .sort({ createdAt: 1 })
+            .session(session || null);
+
+        return {
+            canRequest: false,
+            nextAvailableAt: new Date(
+                earliestRequest.createdAt.getTime() + 24 * 60 * 60 * 1000
+            ),
+            reason: "max_networks",
+        };
+    }
+
+    return { canRequest: true };
 }
 
 export async function checkRateLimitForWalletAddress(
     address: string,
+    networkId: number,
     session?: ClientSession
 ) {
     const now = new Date();
@@ -51,24 +80,50 @@ export async function checkRateLimitForWalletAddress(
         return { canRequest: true };
     }
 
-    // Check if there's a request within the last 24 hours
-    const recentRequest = await Request.findOne({
+    // First check if there's a request for this specific network within the last 24 hours
+    const recentNetworkRequest = await Request.findOne({
         userId: user._id,
+        networkId: networkId,
         createdAt: { $gte: oneDayAgo },
     })
         .sort({ createdAt: -1 })
         .session(session || null);
 
-    if (!recentRequest) {
-        return { canRequest: true };
+    if (recentNetworkRequest) {
+        return {
+            canRequest: false,
+            nextAvailableAt: new Date(
+                recentNetworkRequest.createdAt.getTime() + 24 * 60 * 60 * 1000
+            ),
+            reason: "network_specific",
+        };
     }
 
-    return {
-        canRequest: false,
-        nextAvailableAt: new Date(
-            recentRequest.createdAt.getTime() + 24 * 60 * 60 * 1000
-        ),
-    };
+    // Then check if the wallet has requested from 3 different networks already
+    const distinctNetworks = await Request.distinct("networkId", {
+        userId: user._id,
+        createdAt: { $gte: oneDayAgo },
+    }).session(session || null);
+
+    if (distinctNetworks.length >= Number(env.DISTINCT_NETWORK_LIMIT)) {
+        // Find earliest request to calculate when a slot will free up
+        const earliestRequest = await Request.findOne({
+            userId: user._id,
+            createdAt: { $gte: oneDayAgo },
+        })
+            .sort({ createdAt: 1 })
+            .session(session || null);
+
+        return {
+            canRequest: false,
+            nextAvailableAt: new Date(
+                earliestRequest.createdAt.getTime() + 24 * 60 * 60 * 1000
+            ),
+            reason: "max_networks",
+        };
+    }
+
+    return { canRequest: true };
 }
 
 export async function checkUserExistsAndDonations(

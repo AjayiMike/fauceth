@@ -44,6 +44,8 @@ const requestSchema = new Schema<IRequest>(
 requestSchema.index({ userId: 1, createdAt: -1 });
 requestSchema.index({ ipAddressId: 1, createdAt: -1 });
 requestSchema.index({ networkId: 1, createdAt: -1 });
+requestSchema.index({ userId: 1, networkId: 1, createdAt: -1 });
+requestSchema.index({ ipAddressId: 1, networkId: 1, createdAt: -1 });
 
 // Safe model registration
 export const Request =

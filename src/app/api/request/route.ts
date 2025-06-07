@@ -82,35 +82,51 @@ export async function POST(req: NextRequest) {
             // Check rate limit
             const ipRateLimit = await checkRateLimitForIpAddress(
                 ipAddress,
+                networkId,
                 session
             );
 
             const walletRateLimit = await checkRateLimitForWalletAddress(
                 checkSummedAddress,
+                networkId,
                 session
             );
 
             if (!ipRateLimit.canRequest && ipRateLimit.nextAvailableAt) {
-                return error(
-                    `Your IP address has reached the request limit. You can request tokens again in ${formatDistanceToNow(
-                        ipRateLimit.nextAvailableAt,
-                        { addSuffix: false }
-                    )}. This cooldown helps ensure fair distribution for everyone.`,
-                    429
-                );
+                const message =
+                    ipRateLimit.reason === "network_specific"
+                        ? `You've already requested tokens on this network from this IP. You can request again in ${formatDistanceToNow(
+                              ipRateLimit.nextAvailableAt,
+                              { addSuffix: false }
+                          )}.`
+                        : `You've reached the limit of ${
+                              env.DISTINCT_NETWORK_LIMIT
+                          } different networks per day from this IP. You can request again in ${formatDistanceToNow(
+                              ipRateLimit.nextAvailableAt,
+                              { addSuffix: false }
+                          )}.`;
+
+                return error(message, 429);
             }
 
             if (
                 !walletRateLimit.canRequest &&
                 walletRateLimit.nextAvailableAt
             ) {
-                return error(
-                    `This wallet address has reached the request limit. You can request tokens again in ${formatDistanceToNow(
-                        walletRateLimit.nextAvailableAt,
-                        { addSuffix: false }
-                    )}. This cooldown helps ensure fair distribution for everyone.`,
-                    429
-                );
+                const message =
+                    walletRateLimit.reason === "network_specific"
+                        ? `This wallet has already requested tokens on this network. You can request again in ${formatDistanceToNow(
+                              walletRateLimit.nextAvailableAt,
+                              { addSuffix: false }
+                          )}.`
+                        : `This wallet has reached the limit of ${
+                              env.DISTINCT_NETWORK_LIMIT
+                          } different networks per day. You can request from another network in ${formatDistanceToNow(
+                              walletRateLimit.nextAvailableAt,
+                              { addSuffix: false }
+                          )}.`;
+
+                return error(message, 429);
             }
 
             const [userExists, totalDonations] =

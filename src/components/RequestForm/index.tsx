@@ -346,7 +346,7 @@ const RequestForm = ({
                         </DialogTitle>
                         <DialogDescription className="text-gray-600">
                             Your requested testnet {currency ?? "ETH"} has been
-                            sent successfully.
+                            processed successfully.
                         </DialogDescription>
                     </DialogHeader>
 
