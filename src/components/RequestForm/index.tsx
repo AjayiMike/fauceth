@@ -82,7 +82,11 @@ const RequestForm = ({
     const hCaptchaRef = useRef<HCaptcha>(null);
 
     const renderAlert = () => {
-        if (isBalanceLoading) {
+        if (
+            isBalanceLoading ||
+            isBalanceLoading === undefined ||
+            balance === undefined
+        ) {
             return (
                 <Alert className="bg-blue-500/10 text-blue-600 border-blue-200">
                     <Loader2
@@ -104,8 +108,9 @@ const RequestForm = ({
                         aria-hidden="true"
                     />
                     <AlertDescription className="text-blue-600/80">
-                        The faucet is currently empty. Please check back later
-                        or consider donating to help keep the faucet running.
+                        The {network?.name || "current network"} faucet is
+                        currently empty. Please check back later or consider
+                        donating to help keep the faucet running.
                     </AlertDescription>
                 </Alert>
             );
