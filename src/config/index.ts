@@ -1,5 +1,4 @@
-import { isSupportedChain } from "@/lib/networks";
-import { getCachedNetwork } from "@/lib/networks/cache";
+import { AddEthereumChainParams, INetwork } from "@/types/network";
 
 /**
  * @title EIP6963EventNames
@@ -33,28 +32,43 @@ export function isPreviouslyConnectedProvider(providerRDNS: string): boolean {
     );
 }
 
+export const formatChainInfoToAddEthereumChainParams = (
+    chainInfo: INetwork
+): AddEthereumChainParams => {
+    return {
+        chainId: `0x${chainInfo.chainId.toString(16)}`,
+        chainName: chainInfo.name,
+        nativeCurrency: chainInfo.nativeCurrency,
+        rpcUrls: chainInfo.rpc,
+        blockExplorerUrls: chainInfo.explorers?.map((explorer) => explorer.url),
+    };
+};
+
 /**
  * @title switchChain
  * @dev Function to switch to a supported chain.
  * @param chain The chain ID to switch to.
  * @param provider The EIP1193Provider instance.
  */
-export const switchChain = async (chain: number, provider: EIP1193Provider) => {
-    if (!isSupportedChain(chain))
-        return console.debug("attempt to switch to a wrong chain!");
+export const switchChain = async (
+    chainInfo: INetwork,
+    provider: EIP1193Provider
+) => {
     try {
         await provider.request({
             method: "wallet_switchEthereumChain",
-            params: [{ chainId: `0x${chain.toString(16)}` }],
+            params: [{ chainId: `0x${chainInfo.chainId.toString(16)}` }],
         });
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
+        console.debug("error switching chain: ", error);
         if (error.code === 4902 || error.code === -32603) {
-            const chainInfo = getCachedNetwork(chain);
             try {
+                const _chainInfo =
+                    formatChainInfoToAddEthereumChainParams(chainInfo);
                 await provider.request({
                     method: "wallet_addEthereumChain",
-                    params: [chainInfo],
+                    params: [_chainInfo],
                 });
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (_error: any) {

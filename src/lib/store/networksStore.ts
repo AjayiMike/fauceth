@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { INetwork } from "@/types/network";
 import { sepolia } from "viem/chains";
 import { prefetchNetworkBalances } from "@/lib/cache/networkBalances";
+import { filterWorkingRPCs } from "@/lib/networks";
 
 const SELECTED_NETWORK_CHAIN_ID_KEY = "selectedNetworkChainId";
 
@@ -61,7 +62,26 @@ export const useNetworksStore = create<NetworksStore>((set, get) => ({
 
             const data = await response.json();
             if (data.success && data.data) {
-                const networks = data.data as INetwork[];
+                const rawNetworks = data.data as INetwork[];
+
+                // Process networks in parallel for better performance
+                const networksWithWorkingRPCs = await Promise.all(
+                    rawNetworks.map(async (network) => {
+                        const workingRPCs = await filterWorkingRPCs(
+                            network.rpc
+                        );
+                        return {
+                            ...network,
+                            rpc: workingRPCs,
+                        };
+                    })
+                );
+
+                // Filter out networks with no working RPCs
+                const networks = networksWithWorkingRPCs.filter(
+                    (network) => network.rpc.length > 0
+                );
+
                 const initialSelected = getInitialSelectedNetwork(networks);
 
                 set({

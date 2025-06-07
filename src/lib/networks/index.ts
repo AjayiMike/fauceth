@@ -21,7 +21,7 @@ export const CONFIG = {
         CHAINID: "https://chainid.network",
     },
     RPC_TEST_TIMEOUT: 3000, // 3 seconds timeout for RPC testing
-    RPC_CACHE_DURATION: 1000 * 60 * 60, // 1 hour in milliseconds
+    RPC_CACHE_DURATION: 1000 * 20 * 60, // 20 minutes in milliseconds
 } as const;
 
 /**

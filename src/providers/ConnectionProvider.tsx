@@ -6,6 +6,7 @@ import {
     LOCAL_STORAGE_KEYS,
     switchChain,
 } from "@/config";
+import { useNetworksStore } from "@/lib/store/networksStore";
 import {
     createContext,
     useCallback,
@@ -23,6 +24,7 @@ type StateType = {
     handleConnect: (provider: EIP6963ProviderDetail) => Promise<void>;
     handleSwitchChain: (chainId: number) => Promise<void>;
     handleDisconnect: () => Promise<void>;
+    isSupportedChain: (chainId: number) => boolean;
 };
 
 const ConnectionContext = createContext<StateType | undefined>(undefined);
@@ -49,6 +51,15 @@ export const ConnectionProvider = ({
         accounts: string[];
         chainId: number;
     } | null>(null);
+
+    const { networks } = useNetworksStore();
+
+    const isSupportedChain = useCallback(
+        (chainId: number) => {
+            return networks.some((network) => network.chainId === chainId);
+        },
+        [networks]
+    );
 
     async function handleConnect(
         selectedProviderDetails: EIP6963ProviderDetail
@@ -84,11 +95,13 @@ export const ConnectionProvider = ({
                 connection.providerUUID
             )!.provider;
 
-            await switchChain(chainId, provider);
-            setConnection({
-                ...connection,
-                chainId,
-            });
+            if (!isSupportedChain(chainId))
+                throw new Error("attempt to switch to a wrong chain!");
+
+            await switchChain(
+                networks.find((network) => network.chainId === chainId)!,
+                provider
+            );
         } catch (error) {
             console.debug(error);
         }
@@ -234,6 +247,7 @@ export const ConnectionProvider = ({
                 handleConnect,
                 handleSwitchChain,
                 handleDisconnect,
+                isSupportedChain,
             }}
         >
             {children}

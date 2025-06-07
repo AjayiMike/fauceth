@@ -57,6 +57,8 @@ const DonateForm = () => {
         github: "",
         farcaster: "",
     });
+    const [networkMismatchAlertDismissed, setNetworkMismatchAlertDismissed] =
+        useState(false);
 
     const insufficientBalance =
         balance !== undefined &&
@@ -67,12 +69,26 @@ const DonateForm = () => {
 
     // Check if current chain is supported and get current network info
     const currentNetwork = networks.find((n) => n.chainId === chainId);
-    const isUnsupportedChain = isConnected && chainId && !currentNetwork;
+    const isUnsupportedChain = Boolean(
+        isConnected && chainId && !currentNetwork
+    );
+
+    // Check if connected network doesn't match the selected network
+    const isNetworkMismatch =
+        isConnected &&
+        selectedNetwork &&
+        currentNetwork &&
+        selectedNetwork.chainId !== currentNetwork.chainId;
 
     // Log current step when it changes
     useEffect(() => {
         console.log("Current step updated:", currentStep);
     }, [currentStep]);
+
+    // Reset network mismatch dismissal when networks change
+    useEffect(() => {
+        setNetworkMismatchAlertDismissed(false);
+    }, [selectedNetwork?.chainId, currentNetwork?.chainId]);
 
     // Validate social links
     const validateSocialLink = (
@@ -664,7 +680,11 @@ const DonateForm = () => {
                                     value={amount}
                                     onUserInput={setAmount}
                                     isError={isError}
-                                    disabled={!isConnected || isLoading}
+                                    disabled={
+                                        !isConnected ||
+                                        isLoading ||
+                                        isUnsupportedChain
+                                    }
                                     aria-invalid={isError}
                                     aria-describedby={
                                         isError
@@ -697,7 +717,7 @@ const DonateForm = () => {
                                 {!isConnected ? (
                                     <Alert
                                         variant="destructive"
-                                        className="bg-yellow-500/10 text-yellow-700 border-yellow-300"
+                                        className="bg-red-500/10 text-yellow-700 border-red-300"
                                     >
                                         <AlertCircle
                                             className="h-4 w-4"
@@ -720,6 +740,55 @@ const DonateForm = () => {
                                         <AlertDescription className="text-red-600/80">
                                             Unsupported network. Please switch
                                             to one of the supported network
+                                        </AlertDescription>
+                                    </Alert>
+                                ) : isNetworkMismatch &&
+                                  !networkMismatchAlertDismissed ? (
+                                    <Alert className="bg-amber-500/10 text-amber-700 border-amber-200">
+                                        <AlertCircle
+                                            className="h-4 w-4"
+                                            aria-hidden="true"
+                                        />
+                                        <AlertTitle>
+                                            Network Mismatch
+                                        </AlertTitle>
+                                        <AlertDescription className="text-amber-700/90 inline">
+                                            Your wallet is connected to{" "}
+                                            <strong>
+                                                {currentNetwork?.name}
+                                            </strong>
+                                            , but you&apos;ve selected{" "}
+                                            <strong>
+                                                {selectedNetwork?.name}
+                                            </strong>{" "}
+                                            in the app.
+                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        handleSwitchChain(
+                                                            selectedNetwork?.chainId as number
+                                                        )
+                                                    }
+                                                    className="bg-amber-500/20 border-amber-300 hover:bg-amber-500/30 text-amber-700"
+                                                >
+                                                    Switch wallet to{" "}
+                                                    {selectedNetwork?.name}
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        setNetworkMismatchAlertDismissed(
+                                                            true
+                                                        )
+                                                    }
+                                                    className="border-amber-300 hover:bg-amber-500/10"
+                                                >
+                                                    Dismiss
+                                                </Button>
+                                            </div>
                                         </AlertDescription>
                                     </Alert>
                                 ) : (

@@ -10,6 +10,15 @@ export type INetwork = {
     explorers: Explorer[];
 };
 
+export type AddEthereumChainParams = {
+    chainId: string;
+    chainName: string;
+    iconUrls?: string[];
+    nativeCurrency: NativeCurrency;
+    rpcUrls: string[];
+    blockExplorerUrls?: string[];
+};
+
 export interface ChainFeature {
     name: string;
 }
