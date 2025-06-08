@@ -55,7 +55,7 @@ const FaucetInfo: FC<{
                 color: "text-blue-500 bg-blue-500/10",
             },
             {
-                title: "Cooldown",
+                title: "Interval",
                 value: formatDuration(cooldownPeriod),
                 icon: Clock,
                 color: "text-purple-500 bg-purple-500/10",
