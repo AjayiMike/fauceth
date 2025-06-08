@@ -20,7 +20,7 @@ export const CONFIG = {
     API_ENDPOINTS: {
         CHAINID: "https://chainid.network",
     },
-    RPC_TEST_TIMEOUT: 10000, // 10 seconds timeout for RPC testing
+    RPC_TEST_TIMEOUT: 15000, // 15 seconds is a generous non-blocking timeout
     RPC_CACHE_DURATION: 1000 * 20 * 60, // 20 minutes in milliseconds
 } as const;
 

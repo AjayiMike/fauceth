@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 const Footer = () => {
     return (
         <footer className="bg-white shadow-sm py-4 mt-auto">
@@ -9,9 +11,10 @@ const Footer = () => {
                     </span>
                     <a
                         href="https://github.com/ajayimike/fauceth"
-                        className="cursor-pointer"
                         target="_blank"
                         rel="noopener noreferrer"
+                        className="hover:text-muted-foreground transition-colors"
+                        aria-label="GitHub Repository"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -33,4 +36,4 @@ const Footer = () => {
     );
 };
 
-export default Footer;
+export default memo(Footer);

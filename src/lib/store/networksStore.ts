@@ -1,26 +1,36 @@
 import { create } from "zustand";
-import { INetwork } from "@/types/network";
-import { sepolia } from "viem/chains";
-import { prefetchNetworkBalances } from "@/lib/cache/networkBalances";
-import { filterWorkingRPCs } from "@/lib/networks";
+import { IAugmentedNetwork, FaucetState, INetwork } from "@/types/network";
+import { holesky, sepolia } from "viem/chains";
+import { filterWorkingRPCs, getETHBalance } from "@/lib/networks";
+import { env } from "@/config/env";
 
 const SELECTED_NETWORK_CHAIN_ID_KEY = "selectedNetworkChainId";
 
+// Define the high-priority networks
+const PRIORITY_NETWORK_IDS = [
+    11155111, 17000, 97, 421614, 4062, 84532, 43113, 4202,
+];
+
 interface NetworksState {
-    networks: INetwork[];
-    selectedNetwork: INetwork | null;
+    networks: IAugmentedNetwork[];
+    selectedNetwork: IAugmentedNetwork | null;
     isLoading: boolean;
     error: string | null;
-    fetchNetworks: () => Promise<void>;
-    setSelectedNetwork: (network: INetwork) => void;
-    _hasHydrated: boolean; // To track if we've attempted to load from localStorage
+    initializeNetworks: () => Promise<void>;
+    setSelectedNetwork: (network: IAugmentedNetwork) => void;
+    _updateNetwork: (
+        chainId: number,
+        updates: Partial<IAugmentedNetwork>
+    ) => void;
 }
 
-type NetworksStore = NetworksState;
+const selectInitialNetwork = (
+    networks: IAugmentedNetwork[]
+): IAugmentedNetwork | null => {
+    if (networks.length === 0) return null;
 
-// Helper to get initial selected network
-const getInitialSelectedNetwork = (networks: INetwork[]): INetwork | null => {
-    if (typeof window !== "undefined" && networks.length > 0) {
+    // 1. Prioritize persisted network from localStorage
+    if (typeof window !== "undefined") {
         const storedChainId = localStorage.getItem(
             SELECTED_NETWORK_CHAIN_ID_KEY
         );
@@ -32,81 +42,131 @@ const getInitialSelectedNetwork = (networks: INetwork[]): INetwork | null => {
             if (persistedNetwork) return persistedNetwork;
         }
     }
-    // Default selection logic
-    if (networks.length > 0) {
-        const sepoliaNetwork = networks.find(
-            (network: INetwork) => network.chainId === sepolia.id
-        );
-        return sepoliaNetwork || networks[0];
-    }
-    return null;
+
+    // 2. Fallback to Sepolia if available
+    const sepoliaNetwork = networks.find((n) => n.chainId === sepolia.id);
+    if (sepoliaNetwork) return sepoliaNetwork;
+
+    // 3. Fallback to Holesky if available
+    const holeskyNetwork = networks.find((n) => n.chainId === holesky.id);
+    if (holeskyNetwork) return holeskyNetwork;
+
+    // 4. Fallback to the first network in the list
+    return networks[0];
 };
 
-export const useNetworksStore = create<NetworksStore>((set, get) => ({
+export const useNetworksStore = create<NetworksState>((set, get) => ({
     networks: [],
-    selectedNetwork: null, // Initialized to null, will be set by fetchNetworks
-    isLoading: false,
+    selectedNetwork: null,
+    isLoading: true,
     error: null,
-    _hasHydrated: false, // Initially not hydrated
 
-    fetchNetworks: async () => {
-        if (get().networks.length > 0 && get()._hasHydrated) return; // Avoid refetch if already loaded & hydrated
+    initializeNetworks: async () => {
+        if (get().networks.length > 0 && !get().isLoading) return;
 
         set({ isLoading: true, error: null });
 
         try {
             const response = await fetch("/api/networks");
-            if (!response.ok) {
-                throw new Error("Failed to fetch networks");
-            }
-
+            if (!response.ok)
+                throw new Error("Failed to fetch master network list");
             const data = await response.json();
-            if (data.success && data.data) {
-                const rawNetworks = data.data as INetwork[];
+            if (!data.success || !data.data)
+                throw new Error("API response was not successful.");
 
-                // Process networks in parallel for better performance
-                const networksWithWorkingRPCs = await Promise.all(
-                    rawNetworks.map(async (network) => {
-                        const workingRPCs = await filterWorkingRPCs(
-                            network.rpc
-                        );
-                        return {
-                            ...network,
-                            rpc: workingRPCs,
-                        };
-                    })
-                );
+            const rawNetworks = data.data as INetwork[];
 
-                // Filter out networks with no working RPCs
-                const networks = networksWithWorkingRPCs.filter(
-                    (network) => network.rpc.length > 0
-                );
+            const pendingNetworks: IAugmentedNetwork[] = rawNetworks.map(
+                (network) => ({
+                    ...network,
+                    health: "pending",
+                    faucetState: "loading",
+                    balance: null,
+                })
+            );
 
-                const initialSelected = getInitialSelectedNetwork(networks);
+            // Set initial state with all networks pending
+            const initialSelected = selectInitialNetwork(pendingNetworks);
+            set({
+                networks: pendingNetworks,
+                isLoading: false,
+                selectedNetwork: initialSelected,
+            });
 
-                set({
-                    networks,
-                    selectedNetwork: initialSelected,
-                    isLoading: false,
-                    _hasHydrated: true, // Mark as hydrated after attempting to load from localStorage via getInitialSelectedNetwork
+            // Reusable validation function for a single network
+            const validateNetwork = async (network: IAugmentedNetwork) => {
+                const workingRPCs = await filterWorkingRPCs(network.rpc);
+                if (workingRPCs.length === 0) {
+                    get()._updateNetwork(network.chainId, {
+                        health: "offline",
+                        faucetState: "error",
+                    });
+                    return;
+                }
+
+                get()._updateNetwork(network.chainId, {
+                    health: "online",
+                    rpc: workingRPCs,
                 });
 
-                // Prefetch network balances in the background
-                prefetchNetworkBalances(networks).catch((error) => {
-                    console.debug("Error prefetching network balances:", error);
-                });
+                try {
+                    const balance = await getETHBalance(
+                        env.FAUCET_ADDRESS as `0x${string}`,
+                        workingRPCs
+                    );
+                    let faucetState: FaucetState = "ok";
+                    if (balance === 0) faucetState = "empty";
+                    else if (balance < Number(env.MIN_BALANCE))
+                        faucetState = "low";
+                    get()._updateNetwork(network.chainId, {
+                        faucetState,
+                        balance,
+                    });
+                } catch (balanceError) {
+                    console.error(
+                        `Balance fetch failed for ${network.name}:`,
+                        balanceError
+                    );
+                    get()._updateNetwork(network.chainId, {
+                        faucetState: "error",
+                        balance: null,
+                    });
+                }
+            };
+
+            // Tier 1: Prioritize validation of the selected network
+            if (initialSelected) {
+                await validateNetwork(initialSelected);
             }
+
+            // Separate remaining networks into priority and others
+            const remainingNetworks = pendingNetworks.filter(
+                (n) => n.chainId !== initialSelected?.chainId
+            );
+
+            const priorityNetworks = remainingNetworks.filter((n) =>
+                PRIORITY_NETWORK_IDS.includes(n.chainId)
+            );
+            const otherNetworks = remainingNetworks.filter(
+                (n) => !PRIORITY_NETWORK_IDS.includes(n.chainId)
+            );
+
+            // Tier 2: Validate common networks in parallel
+            await Promise.all(priorityNetworks.map(validateNetwork));
+
+            // Tier 3: Start background validation for all other networks
+            otherNetworks.forEach((network) => validateNetwork(network));
         } catch (error) {
-            console.debug("Error fetching networks:", error);
+            console.error("Error initializing networks:", error);
             set({
                 error: error instanceof Error ? error.message : "Unknown error",
                 isLoading: false,
-                _hasHydrated: true, // Also mark as hydrated on error to prevent re-attempts if fetch fails
             });
         }
     },
 
-    setSelectedNetwork: (network: INetwork) => {
+    setSelectedNetwork: (network: IAugmentedNetwork) => {
+        if (network.health !== "online") return;
         set({ selectedNetwork: network });
         if (typeof window !== "undefined") {
             localStorage.setItem(
@@ -114,5 +174,26 @@ export const useNetworksStore = create<NetworksStore>((set, get) => ({
                 network.chainId.toString()
             );
         }
+    },
+
+    _updateNetwork: (chainId: number, updates: Partial<IAugmentedNetwork>) => {
+        set((state) => {
+            let newSelectedNetwork = state.selectedNetwork;
+            const newNetworks = state.networks.map((n) => {
+                if (n.chainId === chainId) {
+                    const updatedNetwork = { ...n, ...updates };
+                    if (state.selectedNetwork?.chainId === chainId) {
+                        newSelectedNetwork = updatedNetwork;
+                    }
+                    return updatedNetwork;
+                }
+                return n;
+            });
+
+            return {
+                networks: newNetworks,
+                selectedNetwork: newSelectedNetwork,
+            };
+        });
     },
 }));

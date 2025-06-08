@@ -1,57 +1,67 @@
-import { INetwork } from "@/types/network";
+import { IAugmentedNetwork, NetworkHealth, FaucetState } from "@/types/network";
 import { CommandItem } from "@/components/ui/command";
 import { NetworkIcon } from "./NetworkIcon";
 import { Skeleton } from "@/components/ui/skeleton";
-import { memo, forwardRef, useMemo } from "react";
+import { memo, forwardRef } from "react";
 import { ActiveIcon, InactiveIcon, PendingIcon } from "./StatusIcons";
 import { displayNumber } from "@/lib/utils/formatting";
 import { cn } from "@/lib/utils";
 
-// Augmented INetwork type for the props
-interface AugmentedNetwork extends INetwork {
-    balance: number | null;
-    isBalanceLoading: boolean;
-    isBalanceError: boolean;
+interface GetStatusIconProps {
+    health: NetworkHealth;
+    faucetState: FaucetState;
 }
 
-interface NetworkStatusDataFromProps {
-    isLoading: boolean;
-    isError: boolean;
-    balance: number | null;
-}
-
-export const getStatusIcon = ({
-    // Modified to accept simplified props
-    isLoading,
-    isError,
-    balance,
-}: NetworkStatusDataFromProps) => {
-    if (isLoading) return <PendingIcon className="text-gray-600" />;
-    if (isError || balance === null)
+export const getStatusIcon = ({ health, faucetState }: GetStatusIconProps) => {
+    if (health === "offline" || faucetState === "error") {
         return <InactiveIcon className="text-destructive/50" />;
+    }
+    if (health === "pending" || faucetState === "loading") {
+        return <PendingIcon className="text-gray-600" />;
+    }
+    // Network is 'online' and faucet is 'ok', 'low', or 'empty'
     return <ActiveIcon className="text-green-600" />;
 };
 
+const getStatusTooltip = ({
+    health,
+    faucetState,
+}: GetStatusIconProps): string => {
+    switch (health) {
+        case "offline":
+            return "Network is offline";
+        case "pending":
+            return "Checking network status...";
+        case "online":
+            switch (faucetState) {
+                case "loading":
+                    return "Fetching faucet balance...";
+                case "ok":
+                    return "Faucet is active";
+                case "low":
+                    return "Faucet balance is low";
+                case "empty":
+                    return "Faucet is empty, but you can still donate";
+                case "error":
+                    return "Could not retrieve faucet balance";
+                default:
+                    return "Online";
+            }
+        default:
+            return "Unknown status";
+    }
+};
+
 interface NetworkItemProps {
-    network: AugmentedNetwork; // Use the augmented type
+    network: IAugmentedNetwork;
     isSelected: boolean;
-    onSelect: (network: AugmentedNetwork) => void; // onSelect now receives the augmented network
+    onSelect: (network: IAugmentedNetwork) => void;
 }
 
-// Use memo and forwardRef to prevent unnecessary re-renders and forward refs
 export const NetworkItem = memo(
     forwardRef<HTMLDivElement, NetworkItemProps>(
         ({ network, isSelected, onSelect }, ref) => {
-            const status = useMemo(() => {
-                if (network.isBalanceLoading) return "Pending";
-                if (network.isBalanceError || network.balance === null)
-                    return "Inactive";
-                return "Active";
-            }, [
-                network.isBalanceLoading,
-                network.isBalanceError,
-                network.balance,
-            ]);
+            const isSelectable = network.health === "online";
 
             return (
                 <CommandItem
@@ -59,12 +69,15 @@ export const NetworkItem = memo(
                     key={network.chainId}
                     data-index={network.chainId}
                     value={network.chainId.toString()}
-                    onSelect={() => onSelect(network)} // Pass the augmented network to onSelect
+                    onSelect={() => {
+                        if (isSelectable) onSelect(network);
+                    }}
+                    disabled={!isSelectable || isSelected}
                     className={cn(
                         "flex items-center justify-between py-3 cursor-pointer",
-                        isSelected && "bg-green-300/50 pointer-events-none"
+                        !isSelectable && "opacity-50 cursor-not-allowed",
+                        isSelected && "bg-accent pointer-events-none"
                     )}
-                    disabled={isSelected}
                 >
                     <div className="flex items-center space-x-3 max-w-[70%]">
                         <NetworkIcon name={network.name} />
@@ -78,25 +91,22 @@ export const NetworkItem = memo(
                         </div>
                     </div>
                     <div className="flex flex-col items-end">
-                        <div title={status}>
-                            {/* Use props directly for getStatusIcon */}
-                            {getStatusIcon({
-                                isLoading: network.isBalanceLoading,
-                                isError: network.isBalanceError,
-                                balance: network.balance,
-                            })}
+                        <div title={getStatusTooltip(network)}>
+                            {getStatusIcon(network)}
                         </div>
-                        {network.isBalanceLoading &&
-                        network.balance === null ? ( // Show skeleton if loading and no balance yet
+                        {network.health === "pending" ||
+                        (network.health === "online" &&
+                            network.faucetState === "loading") ? (
                             <Skeleton className="h-4 w-16 mt-1" />
                         ) : (
                             <span className="text-xs text-muted-foreground mt-1 inline-block whitespace-nowrap overflow-hidden overflow-ellipsis">
-                                {network.balance !== null
+                                {network.health === "online" &&
+                                network.balance !== null
                                     ? `${displayNumber(network.balance, 3)} ${
                                           network.nativeCurrency?.symbol ||
                                           "ETH"
                                       }`
-                                    : "0 ETH"}
+                                    : "---"}
                             </span>
                         )}
                     </div>
@@ -106,5 +116,4 @@ export const NetworkItem = memo(
     )
 );
 
-// Add display name for debugging
 NetworkItem.displayName = "NetworkItem";

@@ -12,8 +12,9 @@ import { Toaster } from "sonner";
 import { Address } from "viem";
 import DonateForm from "@/components/DonateForm";
 import TransactionsTable from "@/components/TransactionsTable";
-import { Leaderboard } from "@/components/Leaderboard";
+import Leaderboard from "@/components/Leaderboard";
 import { useNetworksStore } from "@/lib/store/networksStore";
+import { NetworkStats } from "@/components/NetworkStats";
 
 export default function Home() {
     const { account } = useConnection();
@@ -34,6 +35,7 @@ export default function Home() {
                             selectedNetwork?.nativeCurrency.symbol ?? "ETH"
                         }
                     />
+                    <NetworkStats />
                     <div className="grid grid-cols-12 gap-4 md:gap-8">
                         <div className="col-span-12 lg:col-span-8">
                             <Tabs defaultValue="request">

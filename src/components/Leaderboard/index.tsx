@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { displayNumber } from "@/lib/utils/formatting";
@@ -32,7 +32,7 @@ interface LeaderboardResponse {
     stats: LeaderboardStats;
 }
 
-export const Leaderboard = () => {
+const Leaderboard = () => {
     const [period, setPeriod] = useState<"all-time" | "month" | "week">(
         "all-time"
     );
@@ -234,3 +234,5 @@ export const Leaderboard = () => {
         </div>
     );
 };
+
+export default memo(Leaderboard);

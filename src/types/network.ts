@@ -10,6 +10,15 @@ export type INetwork = {
     explorers: Explorer[];
 };
 
+export type NetworkHealth = "pending" | "online" | "offline";
+export type FaucetState = "loading" | "ok" | "low" | "empty" | "error";
+
+export interface IAugmentedNetwork extends INetwork {
+    health: NetworkHealth;
+    faucetState: FaucetState;
+    balance: number | null;
+}
+
 export type AddEthereumChainParams = {
     chainId: string;
     chainName: string;

@@ -5,7 +5,7 @@ import { Heart, AlertCircle, CheckCircle2, Loader2, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import NumericalInput from "../NumericalInput";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import useBalance from "@/hooks/useBalance";
 import { parseEther, WriteContractErrorType } from "viem";
 import useDonate from "@/hooks/useDonate";
@@ -853,4 +853,4 @@ const DonateForm = () => {
     );
 };
 
-export default DonateForm;
+export default memo(DonateForm);

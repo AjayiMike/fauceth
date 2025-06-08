@@ -11,7 +11,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowDownUp, History, Loader2, Wallet } from "lucide-react";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, memo } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { truncateAddress } from "@/lib/utils/formatting";
 
@@ -44,7 +44,6 @@ const TransactionsTable = () => {
                 throw new Error("Failed to fetch transactions");
             }
 
-            // Extract data from nested structure
             const transactions = result.data.data;
 
             if (type === "requests") {
@@ -70,73 +69,76 @@ const TransactionsTable = () => {
 
     const MotionTableRow = motion(TableRow);
 
-    const renderTransactions = (transactions: Transaction[]) => {
-        if (isLoading) {
-            return (
-                <TableRow>
-                    <TableCell colSpan={3} className="text-center py-8">
-                        <div className="flex items-center justify-center">
-                            <Loader2
-                                className="h-6 w-6 animate-spin text-muted-foreground"
-                                aria-hidden="true"
-                            />
-                        </div>
-                    </TableCell>
-                </TableRow>
-            );
-        }
+    const renderTransactions = useCallback(
+        (transactions: Transaction[]) => {
+            if (isLoading) {
+                return (
+                    <TableRow>
+                        <TableCell colSpan={3} className="text-center py-8">
+                            <div className="flex items-center justify-center">
+                                <Loader2
+                                    className="h-6 w-6 animate-spin text-muted-foreground"
+                                    aria-hidden="true"
+                                />
+                            </div>
+                        </TableCell>
+                    </TableRow>
+                );
+            }
 
-        if (error) {
-            return (
-                <TableRow>
-                    <TableCell
-                        colSpan={3}
-                        className="text-center py-8 text-red-500"
-                    >
-                        {error}
-                    </TableCell>
-                </TableRow>
-            );
-        }
+            if (error) {
+                return (
+                    <TableRow>
+                        <TableCell
+                            colSpan={3}
+                            className="text-center py-8 text-red-500"
+                        >
+                            {error}
+                        </TableCell>
+                    </TableRow>
+                );
+            }
 
-        if (!transactions.length) {
-            return (
-                <TableRow>
-                    <TableCell
-                        colSpan={3}
-                        className="text-center py-8 text-muted-foreground"
-                    >
-                        No transactions found
-                    </TableCell>
-                </TableRow>
-            );
-        }
+            if (!transactions.length) {
+                return (
+                    <TableRow>
+                        <TableCell
+                            colSpan={3}
+                            className="text-center py-8 text-muted-foreground"
+                        >
+                            No transactions found
+                        </TableCell>
+                    </TableRow>
+                );
+            }
 
-        return transactions.map((tx, index) => (
-            <MotionTableRow
-                key={tx._id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                    duration: 0.2,
-                    delay: index * 0.1,
-                }}
-                className={`hover:bg-${
-                    activeTab === "requests" ? "blue" : "rose"
-                }-500/5`}
-            >
-                <TableCell className="font-mono">
-                    {truncateAddress(tx.userId.address)}
-                </TableCell>
-                <TableCell>{tx.amount} ETH</TableCell>
-                <TableCell className="text-right text-muted-foreground">
-                    {formatDistanceToNow(new Date(tx.createdAt), {
-                        addSuffix: true,
-                    })}
-                </TableCell>
-            </MotionTableRow>
-        ));
-    };
+            return transactions.map((tx, index) => (
+                <MotionTableRow
+                    key={tx._id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                        duration: 0.2,
+                        delay: index * 0.1,
+                    }}
+                    className={`hover:bg-${
+                        activeTab === "requests" ? "blue" : "rose"
+                    }-500/5`}
+                >
+                    <TableCell className="font-mono">
+                        {truncateAddress(tx.userId.address)}
+                    </TableCell>
+                    <TableCell>{tx.amount} ETH</TableCell>
+                    <TableCell className="text-right text-muted-foreground">
+                        {formatDistanceToNow(new Date(tx.createdAt), {
+                            addSuffix: true,
+                        })}
+                    </TableCell>
+                </MotionTableRow>
+            ));
+        },
+        [isLoading, error, MotionTableRow, activeTab]
+    );
 
     return (
         <div className="rounded-xl border bg-card overflow-hidden">
@@ -229,4 +231,4 @@ const TransactionsTable = () => {
     );
 };
 
-export default TransactionsTable;
+export default memo(TransactionsTable);
