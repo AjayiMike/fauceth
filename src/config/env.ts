@@ -65,6 +65,10 @@ export const env = {
         "NEXT_PUBLIC_MIN_BALANCE",
         process.env.NEXT_PUBLIC_MIN_BALANCE
     ),
+    WARNING_BALANCE: getEnvValue(
+        "NEXT_PUBLIC_WARNING_BALANCE",
+        process.env.NEXT_PUBLIC_WARNING_BALANCE
+    ),
     OPTIMAL_BALANCE: getEnvValue(
         "NEXT_PUBLIC_OPTIMAL_BALANCE",
         process.env.NEXT_PUBLIC_OPTIMAL_BALANCE

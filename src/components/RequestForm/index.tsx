@@ -75,7 +75,12 @@ const RequestForm = ({
     }, [network]);
     const formattedBalance = balance ? displayNumber(balance, 3) : "0";
     const isZeroBalance = formattedBalance === "0";
-    const isLowBalance = !isZeroBalance && Number(formattedBalance) < 1;
+    const isWarningBalance =
+        !isZeroBalance &&
+        Number(formattedBalance) > 0 &&
+        Number(formattedBalance) <= Number(env.WARNING_BALANCE);
+    const isLowBalance =
+        !isZeroBalance && Number(formattedBalance) < Number(env.MIN_BALANCE);
 
     const [isCopied, copyToClipboard] = useCopyClipboard(2000);
 
@@ -124,6 +129,21 @@ const RequestForm = ({
                         aria-hidden="true"
                     />
                     <AlertDescription className="text-blue-600/80">
+                        The faucet is very low, therefore cannot dispense at the
+                        moment. consider donating to help keep it running.
+                    </AlertDescription>
+                </Alert>
+            );
+        }
+
+        if (isWarningBalance) {
+            return (
+                <Alert className="bg-blue-500/10 text-blue-600 border-blue-200">
+                    <AlertTriangle
+                        className="h-5 w-5 mt-0.5"
+                        aria-hidden="true"
+                    />
+                    <AlertDescription className="text-blue-600/80">
                         The faucet balance is running low (
                         {isBalanceLoading ? (
                             <span className="inline-flex items-center">
@@ -134,7 +154,7 @@ const RequestForm = ({
                             formattedBalance
                         )}{" "}
                         {currency}). You can still request{" "}
-                        {displayNumber(faucetAmount || 0, 3)}{" "}
+                        {displayNumber(faucetAmount || 0, 5)}{" "}
                         {currency ?? "ETH"} every{" "}
                         {formatDuration(cooldownPeriod || 0)}, but please
                         consider donating to help maintain the faucet.
@@ -270,7 +290,11 @@ const RequestForm = ({
                                                 ? "border-destructive"
                                                 : ""
                                         }
-                                        disabled={isLoading}
+                                        disabled={
+                                            isLoading ||
+                                            isLowBalance ||
+                                            isZeroBalance
+                                        }
                                         aria-invalid={!!addressError}
                                         aria-describedby={
                                             addressError
@@ -289,19 +313,22 @@ const RequestForm = ({
                                 </div>
                             </div>
 
-                            <HCaptcha
-                                sitekey={env.HCAPTCHA_SITE_KEY!}
-                                onExpire={onHCaptchaExpire}
-                                onError={onHCaptchaError}
-                                onVerify={setHCaptchaToken}
-                                ref={hCaptchaRef}
-                                size={isXsScreen ? "compact" : "normal"}
-                            />
+                            {!isLowBalance && !isZeroBalance && !isLoading && (
+                                <HCaptcha
+                                    sitekey={env.HCAPTCHA_SITE_KEY!}
+                                    onExpire={onHCaptchaExpire}
+                                    onError={onHCaptchaError}
+                                    onVerify={setHCaptchaToken}
+                                    ref={hCaptchaRef}
+                                    size={isXsScreen ? "compact" : "normal"}
+                                />
+                            )}
 
                             <Button
                                 className="w-full h-12 text-base font-medium bg-blue-500 hover:bg-blue-600"
                                 size="lg"
                                 disabled={
+                                    isLowBalance ||
                                     isZeroBalance ||
                                     !isValid ||
                                     isLoading ||
