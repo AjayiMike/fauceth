@@ -129,8 +129,9 @@ const RequestForm = ({
                         aria-hidden="true"
                     />
                     <AlertDescription className="text-blue-600/80">
-                        The faucet is very low, therefore cannot dispense at the
-                        moment. consider donating to help keep it running.
+                        The faucet is very low on this network, therefore cannot
+                        dispense at the moment. consider donating to help keep
+                        it running.
                     </AlertDescription>
                 </Alert>
             );
@@ -144,7 +145,7 @@ const RequestForm = ({
                         aria-hidden="true"
                     />
                     <AlertDescription className="text-blue-600/80">
-                        The faucet balance is running low (
+                        The faucet balance on this network is running low (
                         {isBalanceLoading ? (
                             <span className="inline-flex items-center">
                                 <Loader2 className="h-3 w-3 mr-1 animate-spin" />
