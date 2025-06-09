@@ -27,4 +27,4 @@ You can use a free tool like [Loom](https://www.loom.com/) or [Streamable](https
 - [ ] Code is well commented, particularly in hard-to-understand areas
 - [ ] Corresponding changes have been made to the documentation
 - [ ] Code changes generate no new warnings
-- [ ] Changes have been manually tested and a screen recording has been included.
+- [ ] Changes have been manually tested and/or a screen recording has been included.
