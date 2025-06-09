@@ -44,8 +44,8 @@ git remote -v
 
 This will show you two remotes:
 
--   `origin` points to **your personal fork** of the repository on GitHub.
--   `upstream` points to the **original `ajayimike/fauceth` repository**.
+- `origin` points to **your personal fork** of the repository on GitHub.
+- `upstream` points to the **original `ajayimike/fauceth` repository**.
 
 You will push your changes to `origin` and pull updates from `upstream`.
 
@@ -66,7 +66,13 @@ git checkout -b feat/38/add-awesome-feature
 
 The `README.md` has instructions on how to get the project running. At this point, you're ready to make your changes! Feel free to ask for help; everyone is a beginner at first 😸
 
-### 5. Commit Your Changes
+### 5. Code Formatting
+
+This project uses [Prettier](https://prettier.io/) to enforce a consistent code style. You don't need to run any commands manually. Your code will be automatically formatted for you before each commit thanks to a pre-commit hook.
+
+If you use VS Code, we highly recommend installing the [Prettier extension](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode). The project is already configured to use it to format your code automatically every time you save a file.
+
+### 6. Commit Your Changes
 
 Once you're happy with your changes, stage and commit them.
 
@@ -77,7 +83,7 @@ git commit -m "feat: add awesome feature"
 
 Please write a clear and concise commit message.
 
-### 6. Sync and Rebase
+### 7. Sync and Rebase
 
 Before you push your changes, it's important to sync your branch with the latest changes from the main project. This is especially important if you have a long-running branch.
 
@@ -96,7 +102,7 @@ git rebase main
 
 You may need to resolve merge conflicts during the rebase.
 
-### 7. Push to Your Fork
+### 8. Push to Your Fork
 
 Push your rebased branch to your fork on GitHub.
 
@@ -109,7 +115,7 @@ git push origin feat/38/add-awesome-feature --force-with-lease
 
 We specifically recommend `--force-with-lease` because it is safer than a standard `--force`. It will not overwrite any work on the remote branch if someone else has pushed to it since you last fetched, thereby preventing accidental data loss.
 
-### 8. Open a Pull Request
+### 9. Open a Pull Request
 
 Go to your fork on GitHub. You should see a prompt to create a pull request from your new branch. Follow the link, fill out the pull request template, and submit it.
 
