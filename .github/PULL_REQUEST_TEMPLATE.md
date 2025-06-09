@@ -1,8 +1,3 @@
----
-name: 🚀 Pull Request
-about: Propose a change to the codebase
----
-
 ### Description
 
 Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context. List any dependencies that are required for this change.
@@ -28,8 +23,8 @@ You can use a free tool like [Loom](https://www.loom.com/) or [Streamable](https
 
 ### Checklist:
 
--   [ ] Code follows the style guidelines of this project
--   [ ] Code is well commented, particularly in hard-to-understand areas
--   [ ] Corresponding changes have been made to the documentation
--   [ ] Code changes generate no new warnings
--   [ ] Changes have been manually tested and a screen recording has been included.
+- [ ] Code follows the style guidelines of this project
+- [ ] Code is well commented, particularly in hard-to-understand areas
+- [ ] Corresponding changes have been made to the documentation
+- [ ] Code changes generate no new warnings
+- [ ] Changes have been manually tested and a screen recording has been included.
