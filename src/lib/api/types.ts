@@ -1,3 +1,7 @@
+import { IDonation } from "../db/models/donation";
+import { IRequest } from "../db/models/request";
+import { User } from "../db/models/types";
+
 export interface RequestFaucetResponse {
     success: boolean;
     amount: number;
@@ -64,4 +68,12 @@ export enum HealthCheckStatus {
 export interface HealthCheckResponse {
     status: HealthCheckStatus;
     timestamp: Date;
+}
+
+export interface Donation extends Omit<IDonation, "userId"> {
+    userId: Partial<User>;
+}
+
+export interface Request extends Omit<IRequest, "userId"> {
+    userId: Partial<User>;
 }

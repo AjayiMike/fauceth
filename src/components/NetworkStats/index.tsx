@@ -9,6 +9,7 @@ import {
     TooltipTrigger,
     TooltipContent,
 } from "@/components/ui/tooltip";
+import { IAugmentedNetwork } from "@/types/network";
 
 const StatCard = ({
     icon: Icon,
@@ -47,21 +48,30 @@ const StatCard = ({
 );
 
 export const NetworkStats = () => {
-    const { networks, isLoading } = useNetworksStore();
+    const networks = useNetworksStore((state) => state.networks);
+    const networkDetails = useNetworksStore((state) => state.networkDetails);
+    const isLoading = useNetworksStore((state) => state.isLoading);
 
     const stats = useMemo(() => {
-        const totalNetworks = networks.length;
-        const onlineNetworks = networks.filter(
+        const augmentedNetworks: IAugmentedNetwork[] = networks.map(
+            (network) => ({
+                ...network,
+                ...networkDetails[network.chainId],
+            })
+        );
+
+        const totalNetworks = augmentedNetworks.length;
+        const onlineNetworks = augmentedNetworks.filter(
             (n) => n.health === "online"
         ).length;
-        const fundedFaucets = networks.filter(
+        const fundedFaucets = augmentedNetworks.filter(
             (n) =>
                 n.health === "online" &&
                 (n.faucetState === "ok" || n.faucetState === "low")
         ).length;
 
         return { totalNetworks, onlineNetworks, fundedFaucets };
-    }, [networks]);
+    }, [networks, networkDetails]);
 
     return (
         <div className="hidden md:grid md:grid-cols-3 gap-6 mb-8">

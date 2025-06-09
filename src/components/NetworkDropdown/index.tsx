@@ -26,6 +26,7 @@ const NetworkDropdown = () => {
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
     const {
         networks,
+        networkDetails,
         selectedNetwork,
         setSelectedNetwork,
         isLoading,
@@ -40,7 +41,13 @@ const NetworkDropdown = () => {
     const [parentNode, setParentNode] = useState<HTMLDivElement | null>(null);
 
     const filteredAndSortedNetworks = useMemo(() => {
-        let processedNetworks = [...networks]; // Create a mutable copy
+        // First, compose the augmented networks from the two separate state slices
+        let processedNetworks: IAugmentedNetwork[] = networks.map(
+            (network) => ({
+                ...network,
+                ...networkDetails[network.chainId],
+            })
+        );
 
         if (debouncedSearchTerm) {
             const searchLower = debouncedSearchTerm.toLowerCase().trim();
@@ -71,7 +78,7 @@ const NetworkDropdown = () => {
             // Otherwise, sort alphabetically
             return a.name.localeCompare(b.name);
         });
-    }, [debouncedSearchTerm, networks]);
+    }, [debouncedSearchTerm, networks, networkDetails]);
 
     const rowVirtualizer = useVirtualizer({
         count: filteredAndSortedNetworks.length,

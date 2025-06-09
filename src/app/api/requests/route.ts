@@ -2,8 +2,7 @@ import { NextRequest } from "next/server";
 import { success, error, validateRequest } from "@/lib/api/response";
 import { getPaginatedRequests } from "@/lib/db/operations";
 import { z } from "zod";
-import { PaginatedResponse } from "@/lib/api/types";
-import { Request } from "@/lib/db/models/types";
+import { PaginatedResponse, Request } from "@/lib/api/types";
 import { withDB } from "@/lib/db/with-db";
 
 const querySchema = z.object({
@@ -27,7 +26,7 @@ export async function GET(req: NextRequest) {
             const searchParams = Object.fromEntries(req.nextUrl.searchParams);
             const { page, limit, networkId } = validateRequest<QueryParams>(
                 searchParams,
-                querySchema.parse
+                querySchema.parse,
             );
 
             const result = await getPaginatedRequests(page, limit, networkId);
@@ -42,7 +41,7 @@ export async function GET(req: NextRequest) {
             console.debug("Get requests error:", err);
             return error(
                 err instanceof Error ? err.message : "Internal server error",
-                500
+                500,
             );
         }
     });

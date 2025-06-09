@@ -9,11 +9,19 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowDownUp, History, Loader2, Wallet } from "lucide-react";
+import {
+    ArrowDownUp,
+    History,
+    Loader2,
+    Wallet,
+    ExternalLink,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { useCallback, useEffect, useState, memo } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { truncateAddress } from "@/lib/utils/formatting";
+import { useNetworksStore } from "@/lib/store/networksStore";
+import { getPreferredExplorer } from "@/lib/networks";
 
 interface Transaction {
     _id: string;
@@ -21,6 +29,8 @@ interface Transaction {
         address: string;
     };
     amount: number;
+    networkId: number;
+    txHash: string;
     createdAt: string;
 }
 
@@ -32,6 +42,7 @@ const TransactionsTable = () => {
     const [donations, setDonations] = useState<Transaction[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const networks = useNetworksStore((state) => state.networks);
 
     const fetchTransactions = async (type: "requests" | "donations") => {
         setIsLoading(true);
@@ -41,7 +52,9 @@ const TransactionsTable = () => {
             const result = await response.json();
 
             if (!response.ok) {
-                throw new Error("Failed to fetch transactions");
+                throw new Error(
+                    result.message || "Failed to fetch transactions"
+                );
             }
 
             const transactions = result.data.data;
@@ -74,7 +87,7 @@ const TransactionsTable = () => {
             if (isLoading) {
                 return (
                     <TableRow>
-                        <TableCell colSpan={3} className="text-center py-8">
+                        <TableCell colSpan={5} className="text-center py-8">
                             <div className="flex items-center justify-center">
                                 <Loader2
                                     className="h-6 w-6 animate-spin text-muted-foreground"
@@ -90,7 +103,7 @@ const TransactionsTable = () => {
                 return (
                     <TableRow>
                         <TableCell
-                            colSpan={3}
+                            colSpan={5}
                             className="text-center py-8 text-red-500"
                         >
                             {error}
@@ -103,7 +116,7 @@ const TransactionsTable = () => {
                 return (
                     <TableRow>
                         <TableCell
-                            colSpan={3}
+                            colSpan={5}
                             className="text-center py-8 text-muted-foreground"
                         >
                             No transactions found
@@ -112,32 +125,58 @@ const TransactionsTable = () => {
                 );
             }
 
-            return transactions.map((tx, index) => (
-                <MotionTableRow
-                    key={tx._id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                        duration: 0.2,
-                        delay: index * 0.1,
-                    }}
-                    className={`hover:bg-${
-                        activeTab === "requests" ? "blue" : "rose"
-                    }-500/5`}
-                >
-                    <TableCell className="font-mono">
-                        {truncateAddress(tx.userId.address)}
-                    </TableCell>
-                    <TableCell>{tx.amount} ETH</TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                        {formatDistanceToNow(new Date(tx.createdAt), {
-                            addSuffix: true,
-                        })}
-                    </TableCell>
-                </MotionTableRow>
-            ));
+            return transactions.map((tx, index) => {
+                const network = networks.find(
+                    (n) => n.chainId === tx.networkId
+                );
+                const amountInUnits = tx.amount;
+                const explorer = getPreferredExplorer(network);
+
+                return (
+                    <MotionTableRow
+                        key={tx._id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                            duration: 0.2,
+                            delay: index * 0.1,
+                        }}
+                        className={`hover:bg-${
+                            activeTab === "requests" ? "blue" : "rose"
+                        }-500/5`}
+                    >
+                        <TableCell className="font-mono">
+                            {truncateAddress(tx.userId.address)}
+                        </TableCell>
+                        <TableCell>
+                            {network?.name ?? "Unknown Network"}
+                        </TableCell>
+                        <TableCell>{`${amountInUnits} ${network?.nativeCurrency.symbol ?? ""}`}</TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                            {formatDistanceToNow(new Date(tx.createdAt), {
+                                addSuffix: true,
+                            })}
+                        </TableCell>
+                        <TableCell className="font-mono text-right">
+                            <a
+                                href={
+                                    explorer
+                                        ? `${explorer.url}/tx/${tx.txHash}`
+                                        : "#"
+                                }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 hover:underline"
+                            >
+                                {truncateAddress(tx.txHash)}
+                                <ExternalLink className="h-3 w-3" />
+                            </a>
+                        </TableCell>
+                    </MotionTableRow>
+                );
+            });
         },
-        [isLoading, error, MotionTableRow, activeTab]
+        [isLoading, error, activeTab, networks, MotionTableRow]
     );
 
     return (
@@ -185,15 +224,20 @@ const TransactionsTable = () => {
                         <Table>
                             <TableHeader>
                                 <TableRow className="hover:bg-transparent">
-                                    <TableHead scope="col" className="w-[40%]">
-                                        Address
-                                    </TableHead>
+                                    <TableHead scope="col">Address</TableHead>
+                                    <TableHead scope="col">Network</TableHead>
                                     <TableHead scope="col">Amount</TableHead>
                                     <TableHead
                                         scope="col"
                                         className="text-right"
                                     >
                                         Time
+                                    </TableHead>
+                                    <TableHead
+                                        scope="col"
+                                        className="text-right"
+                                    >
+                                        Tx Hash
                                     </TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -208,15 +252,20 @@ const TransactionsTable = () => {
                         <Table>
                             <TableHeader>
                                 <TableRow className="hover:bg-transparent">
-                                    <TableHead scope="col" className="w-[40%]">
-                                        Address
-                                    </TableHead>
+                                    <TableHead scope="col">Address</TableHead>
+                                    <TableHead scope="col">Network</TableHead>
                                     <TableHead scope="col">Amount</TableHead>
                                     <TableHead
                                         scope="col"
                                         className="text-right"
                                     >
                                         Time
+                                    </TableHead>
+                                    <TableHead
+                                        scope="col"
+                                        className="text-right"
+                                    >
+                                        Tx Hash
                                     </TableHead>
                                 </TableRow>
                             </TableHeader>
