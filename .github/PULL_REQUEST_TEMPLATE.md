@@ -7,16 +7,14 @@ about: Propose a change to the codebase
 
 Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context. List any dependencies that are required for this change.
 
-Fixes # (issue)
+### Issues
 
-### Type of change
+<!-- List issues addesses by the code change. Prefix issue with "Closes" if the issue is resolved. e.g: "Closes #15" -->
+<!-- That will automatically close the issue when this PR has been merged. -->
 
-Please delete options that are not relevant.
+### Changes
 
--   [ ] Bug fix (non-breaking change which fixes an issue)
--   [ ] New feature (non-breaking change which adds functionality)
--   [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
--   [ ] This change requires a documentation update
+<!-- Short list of code changes in this -->
 
 ### Manual Testing & Verification
 
@@ -30,9 +28,8 @@ You can use a free tool like [Loom](https://www.loom.com/) or [Streamable](https
 
 ### Checklist:
 
--   [ ] My code follows the style guidelines of this project
--   [ ] I have commented my code, particularly in hard-to-understand areas
--   [ ] I have made corresponding changes to the documentation
--   [ ] My changes generate no new warnings
--   [ ] I have manually tested my changes and included a screen recording.
--   [ ] Any dependent changes have been merged and published in downstream modules
+-   [ ] Code follows the style guidelines of this project
+-   [ ] Code is well commented, particularly in hard-to-understand areas
+-   [ ] Corresponding changes have been made to the documentation
+-   [ ] Code changes generate no new warnings
+-   [ ] Changes have been manually tested and a screen recording has been included.
