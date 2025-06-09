@@ -434,3 +434,21 @@ export const getNetworkPublicClient = (network: INetwork) => {
         transport: transport,
     });
 };
+
+export const getPreferredExplorer = (network?: INetwork | null) => {
+    if (!network?.explorers || network.explorers.length === 0) return null;
+
+    if (network.explorers.length > 1) {
+        const etherscan = network.explorers.find((explorer) =>
+            explorer.url.includes("etherscan")
+        );
+        const blockScout = network.explorers.find((explorer) =>
+            explorer.url.includes("blockscout")
+        );
+        const otterscan = network.explorers.find((explorer) =>
+            explorer.url.includes("otterscan")
+        );
+        return etherscan || blockScout || otterscan || network.explorers[0];
+    }
+    return network.explorers[0];
+};

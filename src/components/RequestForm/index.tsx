@@ -32,6 +32,7 @@ import {
 import { INetwork } from "@/types/network";
 import useCopyClipboard from "@/hooks/useCopyClipboard";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { getPreferredExplorer } from "@/lib/networks";
 
 const RequestForm = ({
     balance,
@@ -58,20 +59,7 @@ const RequestForm = ({
     const isXsScreen = useMediaQuery("(max-width: 350px)");
     const currency = network?.nativeCurrency.symbol;
     const explorer = useMemo(() => {
-        if (!network?.explorers || network.explorers.length === 0) return null;
-        if (network.explorers.length > 1) {
-            const etherscan = network.explorers.find((explorer) =>
-                explorer.url.includes("etherscan")
-            );
-            const blockScout = network.explorers.find((explorer) =>
-                explorer.url.includes("blockscout")
-            );
-            const otterscan = network.explorers.find((explorer) =>
-                explorer.url.includes("otterscan")
-            );
-            return etherscan || blockScout || otterscan || network.explorers[0];
-        }
-        return network.explorers[0];
+        return getPreferredExplorer(network);
     }, [network]);
     const formattedBalance = balance ? displayNumber(balance, 3) : "0";
     const isZeroBalance = formattedBalance === "0";

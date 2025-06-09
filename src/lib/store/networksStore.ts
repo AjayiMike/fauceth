@@ -1,35 +1,54 @@
 import { create } from "zustand";
-import { IAugmentedNetwork, FaucetState, INetwork } from "@/types/network";
+import {
+    IAugmentedNetwork,
+    FaucetState,
+    INetwork,
+    NetworkHealth,
+} from "@/types/network";
 import { holesky, sepolia } from "viem/chains";
 import { filterWorkingRPCs, getETHBalance } from "@/lib/networks";
 import { env } from "@/config/env";
 
 const SELECTED_NETWORK_CHAIN_ID_KEY = "selectedNetworkChainId";
 
-// Define the high-priority networks
+// high-priority networks (Because they are the most used)
 const PRIORITY_NETWORK_IDS = [
     11155111, 17000, 97, 421614, 4062, 84532, 43113, 4202,
 ];
 
+interface NetworkDetails {
+    health: NetworkHealth;
+    faucetState: FaucetState;
+    balance: number | null;
+    rpc: string[];
+}
+
 interface NetworksState {
-    networks: IAugmentedNetwork[];
+    networks: INetwork[]; // Static data
+    networkDetails: Record<number, NetworkDetails>; // Dynamic data
     selectedNetwork: IAugmentedNetwork | null;
     isLoading: boolean;
     error: string | null;
     initializeNetworks: () => Promise<void>;
     setSelectedNetwork: (network: IAugmentedNetwork) => void;
-    _updateNetwork: (
+    getNetworkById: (chainId: number) => IAugmentedNetwork | null;
+    _updateNetworkDetails: (
         chainId: number,
-        updates: Partial<IAugmentedNetwork>
+        updates: Partial<NetworkDetails>
     ) => void;
 }
 
 const selectInitialNetwork = (
-    networks: IAugmentedNetwork[]
+    networks: INetwork[],
+    details: Record<number, NetworkDetails>
 ): IAugmentedNetwork | null => {
     if (networks.length === 0) return null;
 
-    // 1. Prioritize persisted network from localStorage
+    const composeAugmentedNetwork = (network: INetwork): IAugmentedNetwork => ({
+        ...network,
+        ...details[network.chainId],
+    });
+
     if (typeof window !== "undefined") {
         const storedChainId = localStorage.getItem(
             SELECTED_NETWORK_CHAIN_ID_KEY
@@ -39,27 +58,39 @@ const selectInitialNetwork = (
             const persistedNetwork = networks.find(
                 (n) => n.chainId === chainId
             );
-            if (persistedNetwork) return persistedNetwork;
+            // 1. If the network is in the local storage, return it
+            if (persistedNetwork)
+                return composeAugmentedNetwork(persistedNetwork);
         }
     }
 
     // 2. Fallback to Sepolia if available
     const sepoliaNetwork = networks.find((n) => n.chainId === sepolia.id);
-    if (sepoliaNetwork) return sepoliaNetwork;
+    if (sepoliaNetwork) return composeAugmentedNetwork(sepoliaNetwork);
 
     // 3. Fallback to Holesky if available
     const holeskyNetwork = networks.find((n) => n.chainId === holesky.id);
-    if (holeskyNetwork) return holeskyNetwork;
+    if (holeskyNetwork) return composeAugmentedNetwork(holeskyNetwork);
 
-    // 4. Fallback to the first network in the list
-    return networks[0];
+    // 4. Fallback to the first network
+    return composeAugmentedNetwork(networks[0]);
 };
 
 export const useNetworksStore = create<NetworksState>((set, get) => ({
     networks: [],
+    networkDetails: {},
     selectedNetwork: null,
     isLoading: true,
     error: null,
+
+    getNetworkById: (chainId: number) => {
+        const state = get();
+        const network = state.networks.find((n) => n.chainId === chainId);
+        if (!network) return null;
+        const details = state.networkDetails[chainId];
+        if (!details) return null;
+        return { ...network, ...details };
+    },
 
     initializeNetworks: async () => {
         if (get().networks.length > 0 && !get().isLoading) return;
@@ -74,37 +105,40 @@ export const useNetworksStore = create<NetworksState>((set, get) => ({
             if (!data.success || !data.data)
                 throw new Error("API response was not successful.");
 
-            const rawNetworks = data.data as INetwork[];
+            const rawNetworks: INetwork[] = data.data;
 
-            const pendingNetworks: IAugmentedNetwork[] = rawNetworks.map(
-                (network) => ({
-                    ...network,
+            const initialDetails: Record<number, NetworkDetails> = {};
+            rawNetworks.forEach((network) => {
+                initialDetails[network.chainId] = {
                     health: "pending",
                     faucetState: "loading",
                     balance: null,
-                })
-            );
+                    rpc: network.rpc,
+                };
+            });
 
-            // Set initial state with all networks pending
-            const initialSelected = selectInitialNetwork(pendingNetworks);
+            const initialSelected = selectInitialNetwork(
+                rawNetworks,
+                initialDetails
+            );
             set({
-                networks: pendingNetworks,
+                networks: rawNetworks,
+                networkDetails: initialDetails,
                 isLoading: false,
                 selectedNetwork: initialSelected,
             });
 
-            // Reusable validation function for a single network
-            const validateNetwork = async (network: IAugmentedNetwork) => {
+            const validateNetwork = async (network: INetwork) => {
                 const workingRPCs = await filterWorkingRPCs(network.rpc);
                 if (workingRPCs.length === 0) {
-                    get()._updateNetwork(network.chainId, {
+                    get()._updateNetworkDetails(network.chainId, {
                         health: "offline",
                         faucetState: "error",
                     });
                     return;
                 }
 
-                get()._updateNetwork(network.chainId, {
+                get()._updateNetworkDetails(network.chainId, {
                     health: "online",
                     rpc: workingRPCs,
                 });
@@ -118,7 +152,7 @@ export const useNetworksStore = create<NetworksState>((set, get) => ({
                     if (balance === 0) faucetState = "empty";
                     else if (balance < Number(env.MIN_BALANCE))
                         faucetState = "low";
-                    get()._updateNetwork(network.chainId, {
+                    get()._updateNetworkDetails(network.chainId, {
                         faucetState,
                         balance,
                     });
@@ -127,7 +161,7 @@ export const useNetworksStore = create<NetworksState>((set, get) => ({
                         `Balance fetch failed for ${network.name}:`,
                         balanceError
                     );
-                    get()._updateNetwork(network.chainId, {
+                    get()._updateNetworkDetails(network.chainId, {
                         faucetState: "error",
                         balance: null,
                     });
@@ -139,11 +173,9 @@ export const useNetworksStore = create<NetworksState>((set, get) => ({
                 await validateNetwork(initialSelected);
             }
 
-            // Separate remaining networks into priority and others
-            const remainingNetworks = pendingNetworks.filter(
+            const remainingNetworks = rawNetworks.filter(
                 (n) => n.chainId !== initialSelected?.chainId
             );
-
             const priorityNetworks = remainingNetworks.filter((n) =>
                 PRIORITY_NETWORK_IDS.includes(n.chainId)
             );
@@ -154,8 +186,7 @@ export const useNetworksStore = create<NetworksState>((set, get) => ({
             // Tier 2: Validate common networks in parallel
             await Promise.all(priorityNetworks.map(validateNetwork));
 
-            // Tier 3: Start background validation for all other networks
-            otherNetworks.forEach((network) => validateNetwork(network));
+            otherNetworks.forEach(validateNetwork);
         } catch (error) {
             console.error("Error initializing networks:", error);
             set({
@@ -176,22 +207,29 @@ export const useNetworksStore = create<NetworksState>((set, get) => ({
         }
     },
 
-    _updateNetwork: (chainId: number, updates: Partial<IAugmentedNetwork>) => {
+    _updateNetworkDetails: (
+        chainId: number,
+        updates: Partial<NetworkDetails>
+    ) => {
         set((state) => {
+            const currentDetails = state.networkDetails[chainId];
+            const newDetails = { ...currentDetails, ...updates };
+
+            const newNetworkDetails = {
+                ...state.networkDetails,
+                [chainId]: newDetails,
+            };
+
             let newSelectedNetwork = state.selectedNetwork;
-            const newNetworks = state.networks.map((n) => {
-                if (n.chainId === chainId) {
-                    const updatedNetwork = { ...n, ...updates };
-                    if (state.selectedNetwork?.chainId === chainId) {
-                        newSelectedNetwork = updatedNetwork;
-                    }
-                    return updatedNetwork;
-                }
-                return n;
-            });
+            if (state.selectedNetwork?.chainId === chainId) {
+                newSelectedNetwork = {
+                    ...state.selectedNetwork,
+                    ...newDetails,
+                };
+            }
 
             return {
-                networks: newNetworks,
+                networkDetails: newNetworkDetails,
                 selectedNetwork: newSelectedNetwork,
             };
         });

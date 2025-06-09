@@ -21,7 +21,7 @@ export default function Home() {
     const { balance, cooldownDuration, dropAmount, isLoading } = useFaucetInfo(
         account as Address | undefined
     );
-    const { selectedNetwork } = useNetworksStore();
+    const selectedNetwork = useNetworksStore((state) => state.selectedNetwork);
     return (
         <div className="min-h-screen flex flex-col">
             <Header />
