@@ -1,104 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
+  <img src="https://github.com/AjayiMike/fauceth/blob/67f58099e14b7d7984606a5dd8b65d882f1dca40/public/fauceth.svg" alt="FaucETH Logo" width="150">
+  <h1>FaucETH</h1>
+  <p>A blazingly fast, reliable, and developer-friendly Ethereum testnet faucet.</p>
 
-# Test ETH Faucet
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-A community-funded testnet ETH faucet for all EVM chains where developers can donate and request test ETH for testing and development.
+</div>
 
-## Prerequisites
+---
 
--   Node.js 18+
--   pnpm
--   MongoDB 6.0+
+FaucETH is a high-performance, open-source faucet for Ethereum testnets. It's designed to provide developers with a fast and reliable source of testnet ETH for their dApps, smart contracts, and other blockchain projects. Our goal is to create a community-driven resource that is easy to use, easy to contribute to, and supports a wide range of EVM-compatible test networks.
 
-## Development Setup
+### ✨ Key Features
 
-### MongoDB Setup
+-   **Multi-Network Support:** Get testnet funds on various networks like Sepolia, Holesky, and more.
+-   **Progressive Network Discovery:** The UI loads instantly and validates network health in the background, so you're never left waiting.
+-   **Intelligent Rate Limiting:** Request funds from up to 3 different networks within a 24-hour period.
+-   **Community Funded:** Anyone can donate to the faucet to help other developers.
+-   **Real-time Updates:** See recent transactions and faucet statistics update live.
+-   **Extensible:** Easily add new networks by editing a single configuration file.
 
-#### macOS/Linux
+### 🛠️ Tech Stack
 
-1. Clean Up (If Needed)
+-   **Framework:** [Next.js](https://nextjs.org/) (App Router)
+-   **Language:** [TypeScript](https://www.typescriptlang.org/)
+-   **Database:** [MongoDB](https://www.mongodb.com/)
+-   **ODM:** [Mongoose](https://mongoosejs.com/)
+-   **State Management:** [Zustand](https://zustand-demo.pmnd.rs/)
+-   **UI:** [Tailwind CSS](https://tailwindcss.com/) & [shadcn/ui](https://ui.shadcn.com/)
+-   **Blockchain Interaction:** [viem](https://viem.sh/)
 
-    If you have an existing MongoDB instance running:
+### 🚀 Getting Started
 
-    ```bash
-    # Stop any running MongoDB instances
-    pkill mongod
+Follow these steps to set up FaucETH on your local machine.
 
-    # Wait for processes to stop
-    sleep 2
-    ```
+#### 1. Prerequisites
 
-2. Create MongoDB data directory:
+-   [Node.js](https://nodejs.org/en/) (v18 or newer)
+-   [pnpm](https://pnpm.io/installation)
+-   [MongoDB](https://www.mongodb.com/try/download/community)
 
-    ```bash
-    mkdir -p ~/mongodb/data/rs0
-    ```
+#### 2. Clone the Repository
 
-3. Start MongoDB with replica set:
+```bash
+git clone https://github.com/your-username/fauceth.git
+cd fauceth
+```
 
-    ```bash
-    mongod --replSet rs0 --port 27017 --dbpath ~/mongodb/data/rs0 --fork --logpath ~/mongodb/data/rs0/mongodb.log
-    ```
+#### 3. Configure Environment Variables
 
-4. Initialize replica set:
+Copy the example environment file:
 
-    ```bash
-    mongosh --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: "localhost:27017"}]})'
-    ```
+```bash
+cp .env.example .env
+```
 
-5. To stop MongoDB:
-    ```bash
-    pkill -f "mongod.*rs0"
-    ```
+Now, open the `.env` file and configure it with your own values
 
-#### Windows
+#### 4. Install Dependencies
 
-1. Create MongoDB data directory:
+Install the necessary packages.
 
-    ```cmd
-    mkdir "%USERPROFILE%\mongodb\data\rs0"
-    ```
+```bash
+pnpm install
+```
 
-2. Start MongoDB with replica set:
+#### 5. Run the Development Server
 
-    ```cmd
-    start /B mongod --replSet rs0 --port 27017 --dbpath "%USERPROFILE%\mongodb\data\rs0" --logpath "%USERPROFILE%\mongodb\data\rs0\mongodb.log"
-    ```
+You're all set! Start the app by running:
 
-3. Initialize replica set:
+```bash
+pnpm dev
+```
 
-    ```cmd
-    mongosh --eval "rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'localhost:27017'}]})"
-    ```
+Open [http://localhost:3000](http://localhost:3000) in your browser to see the running application.
 
-4. To stop MongoDB:
-    ```cmd
-    taskkill /F /IM mongod.exe
-    ```
+### 🙌 Contributing
 
-### Application Setup
+We welcome contributions of all kinds! Whether you're a developer, a designer, or just have an idea for a new feature, we'd love to have your input. Please check out our [Contributing Guide](CONTRIBUTING.md) to get started.
 
-1. Install dependencies:
+### 📄 License
 
-    ```bash
-    pnpm install
-    ```
-
-2. Copy `.env.example` to `.env` and fill in the required values:
-
-    ```bash
-    cp .env.example .env
-    ```
-
-3. Start the development server:
-    ```bash
-    pnpm dev
-    ```
-
-## Production Deployment
-
-For production, we recommend using MongoDB Atlas which provides managed replica sets out of the box. Simply update the `MONGODB_URI` in your environment variables to point to your Atlas cluster.
-
-## License
-
-MIT
+FaucETH is open-source software licensed under the [MIT License](LICENSE).
