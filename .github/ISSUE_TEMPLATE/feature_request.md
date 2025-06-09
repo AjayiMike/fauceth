@@ -2,7 +2,7 @@
 name: ✨ Feature Request
 about: Suggest an idea for this project
 title: "Feature: [Short description of the feature]"
-labels: "enhancement, needs-triage"
+labels: "enhancement"
 assignees: ""
 ---
 
