@@ -111,6 +111,8 @@ Push your rebased branch to your fork on GitHub.
 git push origin feat/38/add-awesome-feature --force-with-lease
 ```
 
+**Note on Pre-push Checks:** Before your code is pushed, a pre-push hook will automatically run to build the project. This is to ensure that no broken code is pushed to the repository. If the build fails, your push will be aborted. You'll need to fix the build errors before you can push successfully.
+
 **A Note on Force Pushing:** We use `git rebase` to keep the commit history clean. Rebasing rewrites your branch's history, so you must use a force push to update the branch on your fork.
 
 We specifically recommend `--force-with-lease` because it is safer than a standard `--force`. It will not overwrite any work on the remote branch if someone else has pushed to it since you last fetched, thereby preventing accidental data loss.
