@@ -67,7 +67,7 @@ Install the necessary packages.
 pnpm install
 ```
 
-#### 5. MongoDB Setup
+#### 5. MongoDB Setup (If you are connecting to a local mongodb instance)
 
 ##### macOS/Linux
 
@@ -133,7 +133,7 @@ pnpm install
     taskkill /F /IM mongod.exe
     ```
 
-#### 5. Run the Development Server
+#### 6. Run the Development Server
 
 You're all set! Start the app by running:
 
