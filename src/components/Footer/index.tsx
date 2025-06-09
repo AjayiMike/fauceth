@@ -1,13 +1,11 @@
-import { memo } from "react";
-
 const Footer = () => {
     return (
         <footer className="bg-white shadow-sm py-4 mt-auto">
             <div className="container mx-auto px-4">
                 <div className="flex justify-between items-center">
                     <span className="text-xs md:text-sm text-gray-500">
-                        © {new Date().getFullYear()} Fauceth | By the community,
-                        for the community
+                        © {new Date().getFullYear()} Fauceth | By the
+                        community, for the community
                     </span>
                     <a
                         href="https://github.com/ajayimike/fauceth"
@@ -36,4 +34,4 @@ const Footer = () => {
     );
 };
 
-export default memo(Footer);
+export default Footer;

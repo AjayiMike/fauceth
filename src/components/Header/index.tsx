@@ -1,8 +1,5 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { memo } from "react";
 import NetworkDropdown from "../NetworkDropdown";
 
 const Header = () => {
@@ -30,4 +27,4 @@ const Header = () => {
     );
 };
 
-export default memo(Header);
+export default Header;
