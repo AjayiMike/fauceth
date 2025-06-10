@@ -21,7 +21,7 @@ import { useState, useEffect } from "react";
 export default function Home() {
     const { account } = useConnection();
     const { balance, cooldownDuration, dropAmount, isLoading } = useFaucetInfo(
-        account as Address | undefined,
+        account as Address | undefined
     );
     const { selectedNetwork } = useNetworksStore();
 
@@ -29,7 +29,7 @@ export default function Home() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const [activeTab, setActiveTab] = useState(
-        searchParams.get("tab") || "request",
+        searchParams.get("tab") || "request"
     );
 
     useEffect(() => {

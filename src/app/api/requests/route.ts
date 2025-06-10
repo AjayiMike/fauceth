@@ -2,8 +2,7 @@ import { NextRequest } from "next/server";
 import { success, error, validateRequest } from "@/lib/api/response";
 import { getPaginatedRequests } from "@/lib/db/operations";
 import { z } from "zod";
-import { PaginatedResponse } from "@/lib/api/types";
-import { Request } from "@/lib/db/models/types";
+import { PaginatedResponse, Request } from "@/lib/api/types";
 import { withDB } from "@/lib/db/with-db";
 
 const querySchema = z.object({

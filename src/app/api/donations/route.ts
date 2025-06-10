@@ -2,8 +2,7 @@ import { z } from "zod";
 import { NextRequest } from "next/server";
 import { success, error, validateRequest } from "@/lib/api/response";
 import { getPaginatedDonations } from "@/lib/db/operations";
-import { IDonation } from "@/lib/db/models/donation";
-import { PaginatedResponse } from "@/lib/api/types";
+import { Donation, PaginatedResponse } from "@/lib/api/types";
 import { withDB } from "@/lib/db/with-db";
 
 const querySchema = z.object({
@@ -32,7 +31,7 @@ export async function GET(req: NextRequest) {
 
             const result = await getPaginatedDonations(page, limit, networkId);
 
-            return success<PaginatedResponse<IDonation>>({
+            return success<PaginatedResponse<Donation>>({
                 data: result.data,
                 total: result.total,
                 page,

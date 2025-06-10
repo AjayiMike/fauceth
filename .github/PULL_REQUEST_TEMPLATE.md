@@ -13,13 +13,13 @@ Please include a summary of the change and which issue is fixed. Please also inc
 
 ### Manual Testing & Verification
 
-**If applicable, please provide a screen recording of your changes in action to demonstrate that they work as expected and that no existing functionality is broken.**
+**If applicable, please provide screenshot(s) or screen recording(s) of your changes in action to demonstrate that they work as expected and that no existing functionality is broken.**
 
 You can use a free tool like [Loom](https://www.loom.com/) or [Streamable](https://streamable.com/) to record your screen.
 
-**Link to screen recording:**
+**Screenshots or Link to the screen recording:**
 
-[Please paste a link to your screen recording here]
+[Please Attach screenshots or paste a link to your screen recording here]
 
 ### Checklist:
 
