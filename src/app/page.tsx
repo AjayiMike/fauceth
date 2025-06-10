@@ -15,13 +15,37 @@ import TransactionsTable from "@/components/TransactionsTable";
 import Leaderboard from "@/components/Leaderboard";
 import { useNetworksStore } from "@/lib/store/networksStore";
 import { NetworkStats } from "@/components/NetworkStats";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 
 export default function Home() {
     const { account } = useConnection();
     const { balance, cooldownDuration, dropAmount, isLoading } = useFaucetInfo(
-        account as Address | undefined
+        account as Address | undefined,
     );
     const { selectedNetwork } = useNetworksStore();
+
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const [activeTab, setActiveTab] = useState(
+        searchParams.get("tab") || "request",
+    );
+
+    useEffect(() => {
+        const tab = searchParams.get("tab");
+        if (tab && (tab === "request" || tab === "donate")) {
+            setActiveTab(tab);
+        }
+    }, [searchParams]);
+
+    const handleTabChange = (value: string) => {
+        setActiveTab(value);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("tab", value);
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    };
+
     return (
         <div className="min-h-screen flex flex-col">
             <Header />
@@ -38,7 +62,10 @@ export default function Home() {
                     <NetworkStats />
                     <div className="grid grid-cols-12 gap-4 md:gap-8">
                         <div className="col-span-12 lg:col-span-8">
-                            <Tabs defaultValue="request">
+                            <Tabs
+                                value={activeTab}
+                                onValueChange={handleTabChange}
+                            >
                                 <TabsList className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
                                     <TabsTrigger
                                         value="request"
