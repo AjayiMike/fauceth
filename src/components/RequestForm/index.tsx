@@ -258,6 +258,32 @@ const RequestForm = ({
                     <div className="space-y-6">
                         {renderAlert()}
 
+                        <Alert className="bg-blue-500/10 text-blue-600 border-blue-200">
+                            <Info
+                                className="h-5 w-5 mt-0.5"
+                                aria-hidden="true"
+                            />
+                            <AlertDescription className="text-blue-600/80">
+                                To request funds, you need a Gitcoin Passport
+                                score of at least 2 or to have made a donation
+                                of at least 2 ETH on any network.
+                            </AlertDescription>
+                            <div className="mt-4 flex gap-2">
+                                <Button variant="outline" size="sm" asChild>
+                                    <a
+                                        href="https://passport.gitcoin.co/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        Learn more about Passport
+                                    </a>
+                                </Button>
+                                <Button variant="outline" size="sm" asChild>
+                                    <a href="?tab=donate">Donate now</a>
+                                </Button>
+                            </div>
+                        </Alert>
+
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <div className="relative">
