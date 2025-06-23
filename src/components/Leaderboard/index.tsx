@@ -51,7 +51,7 @@ const Leaderboard = () => {
 
     if (error) {
         return (
-            <div className="text-center py-8 text-destructive card shadow-md p-6 bg-white rounded-xl border">
+            <div className="text-center py-8 text-destructive card shadow-md p-6 bg-background rounded-xl border">
                 Error loading leaderboard. Please try again later.
             </div>
         );
@@ -116,7 +116,7 @@ const Leaderboard = () => {
                                         <div className="relative flex-shrink-0 w-10 h-10 flex items-center justify-center">
                                             <Blockies seed={donor.address} />
                                             {isTop && (
-                                                <span className="absolute -top-3 -right-3 w-7 h-7 flex items-center justify-center rounded-full bg-white shadow">
+                                                <span className="absolute -top-3 -right-3 w-7 h-7 flex items-center justify-center rounded-full bg-background shadow">
                                                     <Crown
                                                         className="w-5 h-5 text-yellow-500"
                                                         aria-label="Top Donor"

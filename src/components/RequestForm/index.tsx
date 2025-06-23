@@ -393,7 +393,7 @@ const RequestForm = ({
                     </DialogHeader>
 
                     <div className="space-y-6 py-4 overflow-hidden">
-                        <div className="bg-white rounded-lg p-4 border border-blue-100 shadow-sm">
+                        <div className="bg-background rounded-lg p-4 border border-blue-100 shadow-sm">
                             <p className="text-sm font-medium text-gray-500 mb-2">
                                 Amount Sent:
                             </p>
@@ -404,7 +404,7 @@ const RequestForm = ({
                             </p>
                         </div>
 
-                        <div className="bg-white rounded-lg p-4 border border-blue-100 shadow-sm">
+                        <div className="bg-background rounded-lg p-4 border border-blue-100 shadow-sm">
                             <p className="text-sm font-medium text-gray-500 mb-2">
                                 Transaction Hash:
                             </p>

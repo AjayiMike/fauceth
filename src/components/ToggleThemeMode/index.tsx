@@ -4,16 +4,7 @@ import { useTheme } from "next-themes";
 import { MoonIcon, SunIcon } from "lucide-react";
 
 function ToggleThemeMode() {
-    const [mounted, setMounted] = React.useState(false);
     const { theme, setTheme } = useTheme();
-
-    React.useEffect(function () {
-        setMounted(true);
-    }, []);
-
-    if (!mounted) {
-        return null;
-    }
 
     function handleToggleMode() {
         if (theme === "light") {
