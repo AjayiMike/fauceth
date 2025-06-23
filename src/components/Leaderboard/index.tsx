@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, memo } from "react";
+import React, { useState, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { displayNumber } from "@/lib/utils/formatting";
@@ -58,7 +58,7 @@ const Leaderboard = () => {
     }
 
     return (
-        <div className="card shadow-md p-6 bg-white rounded-xl border w-full max-w-full overflow-hidden">
+        <div className="card shadow-md p-6 bg-background rounded-xl border w-full max-w-full overflow-hidden">
             <div className="flex flex-col gap-4 sm:flex-row lg:flex-col sm:justify-between sm:items-center lg:items-start mb-6">
                 <div>
                     <h2 className="text-2xl font-bold mb-1 flex items-center gap-2">
