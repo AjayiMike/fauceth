@@ -114,7 +114,7 @@ Requirement: Proper installation of MongoDB and MongoSh
 1. Create MongoDB data directory:
 
     ```cmd
-    mkdir C:\mongodb\data\rs0 C:\mongodb\data\rs1 C:\mongodb\data\rs2
+    mkdir C:\mongodb\data\rs0 C:\mongodb\data\rs1
     ```
 
 2. Start MongoDB with replica set each on different terminals:
@@ -127,18 +127,14 @@ Requirement: Proper installation of MongoDB and MongoSh
     mongod --port 27019 --dbpath "C:\mongodb\data\rs1" --logpath "C:\mongodb\data\rs1\mongodb.log" --replSet rs0 --storageEngine=wiredTiger
     ```
 
-    ```cmd
-    mongod --port 27020 --dbpath "C:\mongodb\data\rs2" --logpath "C:\mongodb\data\rs2\mongodb.log" --replSet rs0 --storageEngine=wiredTiger
-    ```
-
-    ```
-
-    ```
-
 3. Initialize replica set:
 
     ```cmd
-     mongosh --port 27019 init_replica.js
+     mongosh --port 27019 --eval 'rs.initiate({_id: "rs0", members: [{ _id: 0, host: "localhost:27018" }, { _id: 1, host: "localhost:27019" },]})'
+    ```
+
+    ```cmd
+     mongosh --port 27019 --eval  'rs.status()'
     ```
 
     To stop MongoDB on each running terminal:
