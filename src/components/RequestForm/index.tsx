@@ -381,7 +381,7 @@ const RequestForm = ({
                 open={!!successData}
                 onOpenChange={(open) => !open && setSuccessData(null)}
             >
-                <DialogContent className="sm:max-w-md border-blue-200 bg-gradient-to-b from-white to-blue-50">
+                <DialogContent className="sm:max-w-md border-blue-200 bg-gradient-to-b from-white to-blue-50 bg-background">
                     <DialogHeader className="pb-2">
                         <DialogTitle className="text-xl text-blue-700 font-semibold">
                             Test {currency ?? "ETH"} Request Successful!
@@ -408,7 +408,7 @@ const RequestForm = ({
                             <p className="text-sm font-medium text-gray-500 mb-2">
                                 Transaction Hash:
                             </p>
-                            <div className="relative bg-gray-100 rounded p-0 mt-1 flex">
+                            <div className="relative bg-background rounded p-0 mt-1 flex">
                                 <div className="py-3 px-3 overflow-hidden overflow-ellipsis whitespace-nowrap max-w-[calc(100%-36px)]">
                                     <code className="text-xs">
                                         {successData?.txHash}
@@ -436,7 +436,7 @@ const RequestForm = ({
                                 href={`${explorer.url}/tx/${successData?.txHash}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex justify-center items-center bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-3 px-4 rounded-lg transition-colors w-full"
+                                className="flex justify-center items-center  bg-blue-50 hover:bg-blue-100  text-blue-700 font-medium py-3 px-4 rounded-lg transition-colors w-full"
                             >
                                 View on {explorer.name}
                                 <ExternalLink className="ml-2 h-4 w-4" />

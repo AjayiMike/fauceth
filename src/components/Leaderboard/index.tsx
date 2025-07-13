@@ -135,7 +135,13 @@ const Leaderboard = () => {
                                                 >
                                                     #{index + 1}
                                                 </span>
-                                                <span className="font-mono text-base font-semibold truncate block max-w-[120px]">
+                                                <span
+                                                    className={
+                                                        isTop
+                                                            ? `font-mono text-base font-semibold truncate block max-w-[120px] text-slate-950`
+                                                            : `font-mono text-base font-semibold truncate block max-w-[120px]`
+                                                    }
+                                                >
                                                     {donor.address}
                                                 </span>
                                             </div>
@@ -166,6 +172,11 @@ const Leaderboard = () => {
                                                     viewBox="0 0 24 24"
                                                     aria-hidden="true"
                                                     focusable="false"
+                                                    className={
+                                                        isTop
+                                                            ? "text-slate-900"
+                                                            : undefined
+                                                    }
                                                 >
                                                     <path
                                                         fill="none"
@@ -193,6 +204,11 @@ const Leaderboard = () => {
                                                     viewBox="0 0 24 24"
                                                     aria-hidden="true"
                                                     focusable="false"
+                                                    className={
+                                                        isTop
+                                                            ? "text-slate-900"
+                                                            : undefined
+                                                    }
                                                 >
                                                     <path
                                                         fill="currentColor"
@@ -216,6 +232,11 @@ const Leaderboard = () => {
                                                     viewBox="0 0 24 24"
                                                     aria-hidden="true"
                                                     focusable="false"
+                                                    className={
+                                                        isTop
+                                                            ? "text-slate-900"
+                                                            : undefined
+                                                    }
                                                 >
                                                     <path
                                                         fill="currentColor"
