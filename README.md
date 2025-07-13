@@ -109,23 +109,41 @@ pnpm install
 
 ##### Windows
 
+Requirement: Proper installation of MongoDB and MongoSh
+
 1. Create MongoDB data directory:
 
     ```cmd
-    mkdir C:\mongodb\data\rs0
+    mkdir C:\mongodb\data\rs0 C:\mongodb\data\rs1
     ```
 
-2. Start MongoDB with replica set:
+2. Start MongoDB with replica set each on different terminals:
 
     ```cmd
-    mongod --replSet rs0 --dbpath C:\mongodb\data\rs0 --port 27017
+    mongod --port 27018 --dbpath "C:\mongodb\data\rs0" --logpath "C:\mongodb\data\rs0\mongodb.log" --replSet rs0 --storageEngine=wiredTiger
     ```
-
-    To stop MongoDB:
 
     ```cmd
-    taskkill /F /IM mongod.exe
+    mongod --port 27019 --dbpath "C:\mongodb\data\rs1" --logpath "C:\mongodb\data\rs1\mongodb.log" --replSet rs0 --storageEngine=wiredTiger
     ```
+
+3. Initialize replica set:
+
+    ```cmd
+     mongosh --port 27019 --eval 'rs.initiate({_id: "rs0", members: [{ _id: 0, host: "localhost:27018" }, { _id: 1, host: "localhost:27019" },]})'
+    ```
+
+    ```cmd
+     mongosh --port 27019 --eval  'rs.status()'
+    ```
+
+    To stop MongoDB on each running terminal:
+
+    ```cmd
+    Press Ctrl + C on every terminal server instance instance
+    ```
+
+    PS: Set the MONGO_URI on your .env to mongodb://localhost:27018
 
 #### 6. Run the Development Server
 
