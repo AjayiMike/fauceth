@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, memo } from "react";
+import React, { useState, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { displayNumber } from "@/lib/utils/formatting";
@@ -51,14 +51,14 @@ const Leaderboard = () => {
 
     if (error) {
         return (
-            <div className="text-center py-8 text-destructive card shadow-md p-6 bg-white rounded-xl border">
+            <div className="text-center py-8 text-destructive card shadow-md p-6 bg-background rounded-xl border">
                 Error loading leaderboard. Please try again later.
             </div>
         );
     }
 
     return (
-        <div className="card shadow-md p-6 bg-white rounded-xl border w-full max-w-full overflow-hidden">
+        <div className="card shadow-md p-6 bg-background rounded-xl border w-full max-w-full overflow-hidden">
             <div className="flex flex-col gap-4 sm:flex-row lg:flex-col sm:justify-between sm:items-center lg:items-start mb-6">
                 <div>
                     <h2 className="text-2xl font-bold mb-1 flex items-center gap-2">
@@ -116,7 +116,7 @@ const Leaderboard = () => {
                                         <div className="relative flex-shrink-0 w-10 h-10 flex items-center justify-center">
                                             <Blockies seed={donor.address} />
                                             {isTop && (
-                                                <span className="absolute -top-3 -right-3 w-7 h-7 flex items-center justify-center rounded-full bg-white shadow">
+                                                <span className="absolute -top-3 -right-3 w-7 h-7 flex items-center justify-center rounded-full bg-background shadow">
                                                     <Crown
                                                         className="w-5 h-5 text-yellow-500"
                                                         aria-label="Top Donor"
@@ -135,7 +135,13 @@ const Leaderboard = () => {
                                                 >
                                                     #{index + 1}
                                                 </span>
-                                                <span className="font-mono text-base font-semibold truncate block max-w-[120px]">
+                                                <span
+                                                    className={
+                                                        isTop
+                                                            ? `font-mono text-base font-semibold truncate block max-w-[120px] text-slate-950`
+                                                            : `font-mono text-base font-semibold truncate block max-w-[120px]`
+                                                    }
+                                                >
                                                     {donor.address}
                                                 </span>
                                             </div>
@@ -166,6 +172,11 @@ const Leaderboard = () => {
                                                     viewBox="0 0 24 24"
                                                     aria-hidden="true"
                                                     focusable="false"
+                                                    className={
+                                                        isTop
+                                                            ? "text-slate-900"
+                                                            : undefined
+                                                    }
                                                 >
                                                     <path
                                                         fill="none"
@@ -193,6 +204,11 @@ const Leaderboard = () => {
                                                     viewBox="0 0 24 24"
                                                     aria-hidden="true"
                                                     focusable="false"
+                                                    className={
+                                                        isTop
+                                                            ? "text-slate-900"
+                                                            : undefined
+                                                    }
                                                 >
                                                     <path
                                                         fill="currentColor"
@@ -216,6 +232,11 @@ const Leaderboard = () => {
                                                     viewBox="0 0 24 24"
                                                     aria-hidden="true"
                                                     focusable="false"
+                                                    className={
+                                                        isTop
+                                                            ? "text-slate-900"
+                                                            : undefined
+                                                    }
                                                 >
                                                     <path
                                                         fill="currentColor"
