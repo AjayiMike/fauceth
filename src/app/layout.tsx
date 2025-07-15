@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ConnectionProvider } from "@/providers/ConnectionProvider";
 import AppQueryClientProvider from "@/providers/QueryClient";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -101,9 +102,18 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased`}
             >
-                <ConnectionProvider>
-                    <AppQueryClientProvider>{children}</AppQueryClientProvider>
-                </ConnectionProvider>
+                <ThemeProvider
+                    attribute="class"
+                    defaultTheme="system"
+                    enableSystem
+                    disableTransitionOnChange
+                >
+                    <ConnectionProvider>
+                        <AppQueryClientProvider>
+                            {children}
+                        </AppQueryClientProvider>
+                    </ConnectionProvider>
+                </ThemeProvider>
             </body>
         </html>
     );

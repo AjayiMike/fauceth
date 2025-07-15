@@ -14,23 +14,23 @@ FaucETH is a high-performance, community-funded faucet for Ethereum testnets. It
 
 ### ✨ Key Features
 
--   **Multi-Network Support:** Get testnet funds on 400+ test networks and counting.
--   **Progressive Network Discovery:** The UI loads instantly and validates network health in the background, so you're never left waiting.
--   **IP and wallet address Rate Limiting:** Request funds from up to 3 different networks within a 24-hour period.
--   **Anti-sybil protection** Requires a resonable number of gitcoin passport score or a minimum of 2ETH donation to protect against bots
--   **Community Funded:** Anyone can donate to the faucet to help other developers.
--   **Real-time Updates:** See donation leaderboard, recent transactions and faucet statistics update live.
--   **Automatically Extensible:** Add your testnet to [ethereum-lists/chains](https://github.com/ethereum-lists/chains) and see it show up in FaucETH network list instantly
+- **Multi-Network Support:** Get testnet funds on 400+ test networks and counting.
+- **Progressive Network Discovery:** The UI loads instantly and validates network health in the background, so you're never left waiting.
+- **IP and wallet address Rate Limiting:** Request funds from up to 3 different networks within a 24-hour period.
+- **Anti-sybil protection** Requires a resonable number of gitcoin passport score or a minimum of 2ETH donation to protect against bots
+- **Community Funded:** Anyone can donate to the faucet to help other developers.
+- **Real-time Updates:** See donation leaderboard, recent transactions and faucet statistics update live.
+- **Automatically Extensible:** Add your testnet to [ethereum-lists/chains](https://github.com/ethereum-lists/chains) and see it show up in FaucETH network list instantly
 
 ### 🛠️ Tech Stack
 
--   **Framework:** [Next.js](https://nextjs.org/) (App Router)
--   **Language:** [TypeScript](https://www.typescriptlang.org/)
--   **Database:** [MongoDB](https://www.mongodb.com/)
--   **ODM:** [Mongoose](https://mongoosejs.com/)
--   **State Management:** [Zustand](https://zustand-demo.pmnd.rs/)
--   **UI:** [Tailwind CSS](https://tailwindcss.com/) & [shadcn/ui](https://ui.shadcn.com/)
--   **Blockchain Interaction:** [viem](https://viem.sh/)
+- **Framework:** [Next.js](https://nextjs.org/) (App Router)
+- **Language:** [TypeScript](https://www.typescriptlang.org/)
+- **Database:** [MongoDB](https://www.mongodb.com/)
+- **ODM:** [Mongoose](https://mongoosejs.com/)
+- **State Management:** [Zustand](https://zustand-demo.pmnd.rs/)
+- **UI:** [Tailwind CSS](https://tailwindcss.com/) & [shadcn/ui](https://ui.shadcn.com/)
+- **Blockchain Interaction:** [viem](https://viem.sh/)
 
 ### 🚀 Getting Started
 
@@ -38,9 +38,9 @@ Follow these steps to set up FaucETH on your local machine.
 
 #### 1. Prerequisites
 
--   [Node.js](https://nodejs.org/en/) (v18 or newer)
--   [pnpm](https://pnpm.io/installation)
--   [MongoDB](https://www.mongodb.com/try/download/community)
+- [Node.js](https://nodejs.org/en/) (v18 or newer)
+- [pnpm](https://pnpm.io/installation)
+- [MongoDB](https://www.mongodb.com/try/download/community)
 
 #### 2. Clone the Repository
 
@@ -109,29 +109,41 @@ pnpm install
 
 ##### Windows
 
+Requirement: Proper installation of MongoDB and MongoSh
+
 1. Create MongoDB data directory:
 
     ```cmd
-    mkdir "%USERPROFILE%\mongodb\data\rs0"
+    mkdir C:\mongodb\data\rs0 C:\mongodb\data\rs1
     ```
 
-2. Start MongoDB with replica set:
+2. Start MongoDB with replica set each on different terminals:
 
     ```cmd
-    start /B mongod --replSet rs0 --port 27017 --dbpath "%USERPROFILE%\mongodb\data\rs0" --logpath "%USERPROFILE%\mongodb\data\rs0\mongodb.log"
+    mongod --port 27018 --dbpath "C:\mongodb\data\rs0" --logpath "C:\mongodb\data\rs0\mongodb.log" --replSet rs0 --storageEngine=wiredTiger
+    ```
+
+    ```cmd
+    mongod --port 27019 --dbpath "C:\mongodb\data\rs1" --logpath "C:\mongodb\data\rs1\mongodb.log" --replSet rs0 --storageEngine=wiredTiger
     ```
 
 3. Initialize replica set:
 
     ```cmd
-    mongosh --eval "rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'localhost:27017'}]})"
+     mongosh --port 27019 --eval 'rs.initiate({_id: "rs0", members: [{ _id: 0, host: "localhost:27018" }, { _id: 1, host: "localhost:27019" },]})'
     ```
-
-    To stop MongoDB:
 
     ```cmd
-    taskkill /F /IM mongod.exe
+     mongosh --port 27019 --eval  'rs.status()'
     ```
+
+    To stop MongoDB on each running terminal:
+
+    ```cmd
+    Press Ctrl + C on every terminal server instance instance
+    ```
+
+    PS: Set the MONGO_URI on your .env to mongodb://localhost:27018
 
 #### 6. Run the Development Server
 

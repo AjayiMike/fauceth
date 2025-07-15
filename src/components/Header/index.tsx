@@ -1,16 +1,16 @@
-import Image from "next/image";
+import Image from "../Image";
 import Link from "next/link";
 import NetworkDropdown from "../NetworkDropdown";
+import ToggleThemeMode from "../ToggleThemeMode";
 
 const Header = () => {
     return (
-        <header className="bg-white shadow-sm py-4 sticky top-0 z-50">
+        <header className="bg-background shadow-sm py-4 sticky top-0 z-50">
             <div className="container mx-auto px-4">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center space-x-2">
                         <Link href="/" className="cursor-pointer">
                             <Image
-                                src="/fauceth.svg"
                                 alt="FaucETH logo"
                                 width={32}
                                 height={32}
@@ -18,7 +18,8 @@ const Header = () => {
                             />
                         </Link>
                     </div>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex align-center items-center  space-x-4">
+                        <ToggleThemeMode />
                         <NetworkDropdown />
                     </div>
                 </div>

@@ -258,6 +258,32 @@ const RequestForm = ({
                     <div className="space-y-6">
                         {renderAlert()}
 
+                        <Alert className="bg-blue-500/10 text-blue-600 border-blue-200">
+                            <Info
+                                className="h-5 w-5 mt-0.5"
+                                aria-hidden="true"
+                            />
+                            <AlertDescription className="text-blue-600/80">
+                                To request funds, you need a Gitcoin Passport
+                                score of at least 2 or to have made a donation
+                                of at least 2 ETH on any network.
+                            </AlertDescription>
+                            <div className="mt-4 flex gap-2">
+                                <Button variant="outline" size="sm" asChild>
+                                    <a
+                                        href="https://passport.gitcoin.co/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        Learn more about Passport
+                                    </a>
+                                </Button>
+                                <Button variant="outline" size="sm" asChild>
+                                    <a href="?tab=donate">Donate now</a>
+                                </Button>
+                            </div>
+                        </Alert>
+
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <div className="relative">
@@ -355,7 +381,7 @@ const RequestForm = ({
                 open={!!successData}
                 onOpenChange={(open) => !open && setSuccessData(null)}
             >
-                <DialogContent className="sm:max-w-md border-blue-200 bg-gradient-to-b from-white to-blue-50">
+                <DialogContent className="sm:max-w-md border-blue-200 bg-gradient-to-b from-white to-blue-50 bg-background">
                     <DialogHeader className="pb-2">
                         <DialogTitle className="text-xl text-blue-700 font-semibold">
                             Test {currency ?? "ETH"} Request Successful!
@@ -367,7 +393,7 @@ const RequestForm = ({
                     </DialogHeader>
 
                     <div className="space-y-6 py-4 overflow-hidden">
-                        <div className="bg-white rounded-lg p-4 border border-blue-100 shadow-sm">
+                        <div className="bg-background rounded-lg p-4 border border-blue-100 shadow-sm">
                             <p className="text-sm font-medium text-gray-500 mb-2">
                                 Amount Sent:
                             </p>
@@ -378,11 +404,11 @@ const RequestForm = ({
                             </p>
                         </div>
 
-                        <div className="bg-white rounded-lg p-4 border border-blue-100 shadow-sm">
+                        <div className="bg-background rounded-lg p-4 border border-blue-100 shadow-sm">
                             <p className="text-sm font-medium text-gray-500 mb-2">
                                 Transaction Hash:
                             </p>
-                            <div className="relative bg-gray-100 rounded p-0 mt-1 flex">
+                            <div className="relative bg-background rounded p-0 mt-1 flex">
                                 <div className="py-3 px-3 overflow-hidden overflow-ellipsis whitespace-nowrap max-w-[calc(100%-36px)]">
                                     <code className="text-xs">
                                         {successData?.txHash}
@@ -410,7 +436,7 @@ const RequestForm = ({
                                 href={`${explorer.url}/tx/${successData?.txHash}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex justify-center items-center bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-3 px-4 rounded-lg transition-colors w-full"
+                                className="flex justify-center items-center  bg-blue-50 hover:bg-blue-100  text-blue-700 font-medium py-3 px-4 rounded-lg transition-colors w-full"
                             >
                                 View on {explorer.name}
                                 <ExternalLink className="ml-2 h-4 w-4" />
