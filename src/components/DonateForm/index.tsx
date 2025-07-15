@@ -323,7 +323,7 @@ const DonateForm = () => {
                 return {
                     title: "Verifying Donation",
                     message:
-                        "Transaction confirmed! Now verifying your donation on our servers.",
+                        "Transaction confirmed! Now verifying your donation on the server. This may take a few moments.",
                 };
             case "complete":
                 return {

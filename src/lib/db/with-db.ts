@@ -1,6 +1,7 @@
 import { connectDB } from "./mongodb";
 import mongoose from "mongoose";
 import { ClientSession } from "mongodb";
+import { NextRequest } from "next/server";
 
 export async function withDB<T>(fn: () => Promise<T>): Promise<T> {
     await connectDB();
@@ -8,7 +9,8 @@ export async function withDB<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 export async function withTransaction<T>(
-    operation: (session: ClientSession) => Promise<T>
+    req: NextRequest,
+    operation: (session: ClientSession, req: NextRequest) => Promise<T>
 ): Promise<T> {
     await connectDB();
     const session = await mongoose.startSession();
@@ -21,7 +23,7 @@ export async function withTransaction<T>(
             maxCommitTimeMS: 30000, // 30 seconds
         });
 
-        const result = await operation(session);
+        const result = await operation(session, req);
 
         try {
             await session.commitTransaction();
