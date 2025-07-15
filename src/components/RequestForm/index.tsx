@@ -442,6 +442,57 @@ const RequestForm = ({
                                 <ExternalLink className="ml-2 h-4 w-4" />
                             </a>
                         )}
+
+                        <div className="pt-4 mt-4 border-t border-blue-100">
+                            <div className="space-y-4 text-center">
+                                <p className="text-sm font-medium text-gray-600">
+                                    Do you like this faucet? Give it a star on
+                                    GitHub!
+                                </p>
+                                <div className="flex justify-center">
+                                    <iframe
+                                        src="https://ghbtns.com/github-btn.html?user=AjayiMike&repo=fauceth&type=star&count=true&size=large"
+                                        width="120"
+                                        height="30"
+                                        title="GitHub"
+                                    />
+                                </div>
+
+                                <p className="text-sm font-medium text-gray-600">
+                                    Share the news with others on X!
+                                </p>
+                                <Button
+                                    variant="outline"
+                                    className="w-full flex items-center justify-center gap-2"
+                                    onClick={() => {
+                                        const tweetText = `I just got some testnet ${
+                                            currency ?? "ETH"
+                                        } from Fauceth! A fast and reliable multichain community-funded faucet for all your testing needs. Check it out: ${
+                                            window.location.origin
+                                        }`;
+                                        const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                                            tweetText
+                                        )}`;
+                                        window.open(
+                                            tweetUrl,
+                                            "_blank",
+                                            "noopener,noreferrer"
+                                        );
+                                    }}
+                                >
+                                    <svg
+                                        role="img"
+                                        viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4 fill-current"
+                                    >
+                                        <title>X</title>
+                                        <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.931ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+                                    </svg>
+                                    Share on X
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                 </DialogContent>
             </Dialog>

@@ -14,10 +14,10 @@ import {
     getTransaction,
     isMatchingAddress,
 } from "@/lib/networks";
-import mongoose from "mongoose";
 import { DonateResponse } from "@/lib/api/types";
-import { User } from "@/lib/db/models/user";
 import { env } from "@/config/env";
+import { withTransaction } from "@/lib/db/with-db";
+import { ClientSession } from "mongodb";
 
 const donateBodySchema = donationZodSchema
     .pick({
@@ -38,145 +38,129 @@ type DonateBody = z.infer<typeof donateBodySchema>;
 const contactSupportMessage =
     " Please contact @0xAdek on x if the issue persists.";
 
-export async function POST(req: NextRequest) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+export const POST = async (req: NextRequest) =>
+    withTransaction(req, async (session: ClientSession, req: NextRequest) => {
+        try {
+            const body = await req.json();
+            const { networkId, txHash } = validateRequest<DonateBody>(
+                body,
+                donateBodySchema.parse
+            );
 
-    try {
-        const body = await req.json();
-        const { networkId, txHash } = validateRequest<DonateBody>(
-            body,
-            donateBodySchema.parse
-        );
+            const checksummedTxHash = checksumAddress(txHash as Hex);
 
-        const checksummedTxHash = checksumAddress(txHash as Hex);
+            // verify that the tx has not been used on this system in the past
+            const existingDonation = await getDonationByNetworkIdAndTxHash(
+                networkId,
+                checksummedTxHash,
+                session
+            );
+            if (existingDonation) {
+                return error(
+                    `This transaction has already been recorded as a donation. Please use a different transaction.${contactSupportMessage}`,
+                    400
+                );
+            }
 
-        // verify that the tx has not been used on this system in the past
-        const existingDonation = await getDonationByNetworkIdAndTxHash(
-            networkId,
-            checksummedTxHash,
-            session
-        );
-        if (existingDonation) {
-            await session.abortTransaction();
+            // fetch network details
+            const networkDetails = await getNetworkInfo(networkId);
+            if (!networkDetails.rpc.length) {
+                return error(
+                    `The network (ID: ${networkId}) is not supported or lacks RPC configuration. Please try a different network.${contactSupportMessage}`,
+                    400
+                );
+            }
+
+            // filter working RPCs
+            const workingRPCURLs = await filterWorkingRPCs(networkDetails.rpc);
+            if (workingRPCURLs.length === 0) {
+                return error(
+                    `Network connectivity issue with ${networkDetails.name}. We're unable to verify your transaction at this time. Please try again later.${contactSupportMessage}`,
+                    400
+                );
+            }
+
+            // get transaction
+            const { status, tx } = await getTransaction(
+                checksummedTxHash,
+                workingRPCURLs
+            );
+
+            // verify transaction status
+            if (!status || status === "reverted") {
+                return error(
+                    `The transaction was reverted or failed on the blockchain. Please provide a successful transaction.${contactSupportMessage}`,
+                    400
+                );
+            }
+
+            // verify transaction is to faucet
+            if (
+                !tx.to ||
+                !isMatchingAddress(tx.to, env.FAUCET_ADDRESS as Address)
+            ) {
+                return error(
+                    `This transaction wasn't sent to our faucet address (${env.FAUCET_ADDRESS}). Please use a transaction that was sent to our faucet.${contactSupportMessage}`,
+                    400
+                );
+            }
+
+            // verify transaction value is not 0
+            if (BigInt(tx.value) === BigInt(0)) {
+                return error(
+                    `The transaction didn't include any ETH. Please provide a transaction that sends ETH to our faucet.${contactSupportMessage}`,
+                    400
+                );
+            }
+
+            // get or create user
+            const user = await getOrCreateUser(getAddress(tx.from), session);
+
+            // Check if this is the user's first donation - must check BEFORE recordDonation
+            const isFirstTimeDonor = user.donationCount === 0;
+
+            // record donation
+            await recordDonation(
+                user._id.toString(),
+                networkId,
+                Number(
+                    formatUnits(
+                        tx.value,
+                        networkDetails.nativeCurrency.decimals
+                    )
+                ),
+                checksummedTxHash,
+                session
+            );
+
+            // Log the final response for debugging
+            const response = {
+                success: true,
+                isFirstTimeDonor: isFirstTimeDonor === true,
+            };
+
+            return success<DonateResponse>(response);
+        } catch (err) {
+            console.debug("Donate error:", err);
+            if (err instanceof z.ZodError) {
+                // Handle validation errors specifically
+                const errorMessage = err.errors
+                    .map((e) => `${e.path.join(".")}: ${e.message}`)
+                    .join(", ");
+                return error(
+                    `Please check your donation details: ${errorMessage}.${contactSupportMessage}`,
+                    400
+                );
+            }
             return error(
-                `This transaction has already been recorded as a donation. Please use a different transaction.${contactSupportMessage}`,
-                400
+                err instanceof Error
+                    ? `Something went wrong with your donation: ${err.message}.${contactSupportMessage}`
+                    : `An unexpected error occurred while processing your donation.${contactSupportMessage}`,
+                500
             );
         }
+    });
 
-        // fetch network details
-        const networkDetails = await getNetworkInfo(networkId);
-        if (!networkDetails.rpc.length) {
-            await session.abortTransaction();
-            return error(
-                `The network (ID: ${networkId}) is not supported or lacks RPC configuration. Please try a different network.${contactSupportMessage}`,
-                400
-            );
-        }
-
-        // filter working RPCs
-        const workingRPCURLs = await filterWorkingRPCs(networkDetails.rpc);
-        if (workingRPCURLs.length === 0) {
-            await session.abortTransaction();
-            return error(
-                `Network connectivity issue with ${networkDetails.name}. We're unable to verify your transaction at this time. Please try again later.${contactSupportMessage}`,
-                400
-            );
-        }
-
-        // get transaction
-        const { status, tx } = await getTransaction(
-            checksummedTxHash,
-            workingRPCURLs
-        );
-
-        // verify transaction status
-        if (!status || status === "reverted") {
-            await session.abortTransaction();
-            return error(
-                `The transaction was reverted or failed on the blockchain. Please provide a successful transaction.${contactSupportMessage}`,
-                400
-            );
-        }
-
-        // verify transaction is to faucet
-        if (
-            !tx.to ||
-            !isMatchingAddress(tx.to, env.FAUCET_ADDRESS as Address)
-        ) {
-            await session.abortTransaction();
-            return error(
-                `This transaction wasn't sent to our faucet address (${env.FAUCET_ADDRESS}). Please use a transaction that was sent to our faucet.${contactSupportMessage}`,
-                400
-            );
-        }
-
-        // verify transaction value is not 0
-        if (BigInt(tx.value) === BigInt(0)) {
-            await session.abortTransaction();
-            return error(
-                `The transaction didn't include any ETH. Please provide a transaction that sends ETH to our faucet.${contactSupportMessage}`,
-                400
-            );
-        }
-
-        // get or create user
-        const user = await getOrCreateUser(getAddress(tx.from), session);
-
-        console.log("User donation count BEFORE:", user.donationCount);
-
-        // Check if this is the user's first donation - must check BEFORE recordDonation
-        const isFirstTimeDonor = user.donationCount === 0;
-        console.log("Is first time donor:", isFirstTimeDonor);
-
-        // record donation
-        await recordDonation(
-            user._id.toString(),
-            networkId,
-            Number(
-                formatUnits(tx.value, networkDetails.nativeCurrency.decimals)
-            ),
-            checksummedTxHash,
-            session
-        );
-
-        // Verify user state after donation
-        const userAfter = await User.findById(user._id).session(session);
-        console.log("User donation count AFTER:", userAfter?.donationCount);
-
-        await session.commitTransaction();
-
-        // Log the final response for debugging
-        const response = {
-            success: true,
-            isFirstTimeDonor: isFirstTimeDonor === true,
-        };
-        console.log("Response sent to client:", response);
-        console.log("isFirstTimeDonor type:", typeof isFirstTimeDonor);
-        console.log("isFirstTimeDonor value:", isFirstTimeDonor);
-
-        return success<DonateResponse>(response);
-    } catch (err) {
-        await session.abortTransaction();
-        console.debug("Donate error:", err);
-        if (err instanceof z.ZodError) {
-            // Handle validation errors specifically
-            const errorMessage = err.errors
-                .map((e) => `${e.path.join(".")}: ${e.message}`)
-                .join(", ");
-            return error(
-                `Please check your donation details: ${errorMessage}.${contactSupportMessage}`,
-                400
-            );
-        }
-        return error(
-            err instanceof Error
-                ? `Something went wrong with your donation: ${err.message}.${contactSupportMessage}`
-                : `An unexpected error occurred while processing your donation.${contactSupportMessage}`,
-            500
-        );
-    } finally {
-        session.endSession();
-    }
-}
+// on vercel, serverless funtions are set to run for 10 seconds by default, but can be increased to up to 30 seconds
+// we need to set the maxDuration to 20 seconds to allow for the donation verification and recording to complete
+export const maxDuration = 20;
