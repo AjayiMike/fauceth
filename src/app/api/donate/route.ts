@@ -39,8 +39,11 @@ const contactSupportMessage =
     " Please contact @0xAdek on x if the issue persists.";
 
 export async function POST(req: NextRequest) {
+    console.log("Donate endpoint hitd");
+
     const session = await mongoose.startSession();
     session.startTransaction();
+    console.log("Session started");
 
     try {
         const body = await req.json();
@@ -48,8 +51,10 @@ export async function POST(req: NextRequest) {
             body,
             donateBodySchema.parse
         );
+        console.log("Body validated");
 
         const checksummedTxHash = checksumAddress(txHash as Hex);
+        console.log("Checksummed tx hash:", checksummedTxHash);
 
         // verify that the tx has not been used on this system in the past
         const existingDonation = await getDonationByNetworkIdAndTxHash(
@@ -57,6 +62,7 @@ export async function POST(req: NextRequest) {
             checksummedTxHash,
             session
         );
+        console.log("Existing donation:", existingDonation);
         if (existingDonation) {
             await session.abortTransaction();
             return error(
@@ -64,6 +70,7 @@ export async function POST(req: NextRequest) {
                 400
             );
         }
+        console.log("No existing donation of the same tx hash found");
 
         // fetch network details
         const networkDetails = await getNetworkInfo(networkId);
@@ -74,7 +81,7 @@ export async function POST(req: NextRequest) {
                 400
             );
         }
-
+        console.log("Network details fetched");
         // filter working RPCs
         const workingRPCURLs = await filterWorkingRPCs(networkDetails.rpc);
         if (workingRPCURLs.length === 0) {
@@ -84,13 +91,13 @@ export async function POST(req: NextRequest) {
                 400
             );
         }
-
+        console.log("Working RPCs filtered");
         // get transaction
         const { status, tx } = await getTransaction(
             checksummedTxHash,
             workingRPCURLs
         );
-
+        console.log("Transaction fetched");
         // verify transaction status
         if (!status || status === "reverted") {
             await session.abortTransaction();
@@ -99,7 +106,7 @@ export async function POST(req: NextRequest) {
                 400
             );
         }
-
+        console.log("Transaction status verified");
         // verify transaction is to faucet
         if (
             !tx.to ||
@@ -111,7 +118,7 @@ export async function POST(req: NextRequest) {
                 400
             );
         }
-
+        console.log("Transaction to faucet verified");
         // verify transaction value is not 0
         if (BigInt(tx.value) === BigInt(0)) {
             await session.abortTransaction();
@@ -120,16 +127,16 @@ export async function POST(req: NextRequest) {
                 400
             );
         }
-
+        console.log("Transaction value verified");
         // get or create user
         const user = await getOrCreateUser(getAddress(tx.from), session);
-
+        console.log("User fetched or created");
         console.log("User donation count BEFORE:", user.donationCount);
 
         // Check if this is the user's first donation - must check BEFORE recordDonation
         const isFirstTimeDonor = user.donationCount === 0;
         console.log("Is first time donor:", isFirstTimeDonor);
-
+        console.log("User donation count BEFORE:", user.donationCount);
         // record donation
         await recordDonation(
             user._id.toString(),
@@ -140,13 +147,13 @@ export async function POST(req: NextRequest) {
             checksummedTxHash,
             session
         );
-
+        console.log("Donation recorded");
         // Verify user state after donation
         const userAfter = await User.findById(user._id).session(session);
         console.log("User donation count AFTER:", userAfter?.donationCount);
-
+        console.log("Session committed");
         await session.commitTransaction();
-
+        console.log("Session committed");
         // Log the final response for debugging
         const response = {
             success: true,
@@ -155,9 +162,10 @@ export async function POST(req: NextRequest) {
         console.log("Response sent to client:", response);
         console.log("isFirstTimeDonor type:", typeof isFirstTimeDonor);
         console.log("isFirstTimeDonor value:", isFirstTimeDonor);
-
+        console.log("Response sent to client");
         return success<DonateResponse>(response);
     } catch (err) {
+        console.log("Donate error caught");
         await session.abortTransaction();
         console.debug("Donate error:", err);
         if (err instanceof z.ZodError) {
