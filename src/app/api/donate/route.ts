@@ -180,3 +180,7 @@ export async function POST(req: NextRequest) {
         session.endSession();
     }
 }
+
+// on vercel, serverless funntions are set to run for 10 seconds by default, but can be increased to up to 30 seconds
+// we need to set the maxDuration to 20 seconds to allow for the donation verification and record to complete
+export const maxDuration = 20;
