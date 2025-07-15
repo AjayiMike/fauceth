@@ -40,10 +40,16 @@ export async function checkRateLimitForIpAddress(
     }
 
     // Then check if the IP has requested from 3 different networks already
-    const distinctNetworks = await Request.distinct("networkId", {
+    const distinctQuery = Request.distinct("networkId", {
         ipAddressId: ipAddressDoc._id,
         createdAt: { $gte: oneDayAgo },
-    }).session(session || null);
+    });
+
+    if (session) {
+        distinctQuery.session(session);
+    }
+
+    const distinctNetworks = await distinctQuery;
 
     if (distinctNetworks.length >= Number(env.DISTINCT_NETWORK_LIMIT)) {
         // Find earliest request to calculate when a slot will free up
@@ -100,10 +106,15 @@ export async function checkRateLimitForWalletAddress(
     }
 
     // Then check if the wallet has requested from 3 different networks already
-    const distinctNetworks = await Request.distinct("networkId", {
+    const distinctWalletQuery = Request.distinct("networkId", {
         userId: user._id,
         createdAt: { $gte: oneDayAgo },
-    }).session(session || null);
+    });
+
+    if (session) {
+        distinctWalletQuery.session(session);
+    }
+    const distinctNetworks = await distinctWalletQuery;
 
     if (distinctNetworks.length >= Number(env.DISTINCT_NETWORK_LIMIT)) {
         // Find earliest request to calculate when a slot will free up
