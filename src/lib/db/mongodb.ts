@@ -8,22 +8,31 @@ if (!env.MONGODB_URI) {
     );
 }
 
-let isConnected = false;
+// A global promise to ensure we only connect once during an invocation
+let mongooseConnectionPromise: Promise<typeof mongoose> | null = null;
 
 export async function connectDB() {
-    if (isConnected) {
+    // If the connection is already established, reuse it
+    if (mongoose.connection.readyState === 1) {
+        return;
+    }
+
+    // If we've already started connecting, wait for that promise to resolve
+    if (mongooseConnectionPromise) {
+        await mongooseConnectionPromise;
         return;
     }
 
     try {
-        await mongoose.connect(env.MONGODB_URI!, {
+        mongooseConnectionPromise = mongoose.connect(env.MONGODB_URI!, {
             dbName: env.DB_NAME,
+            bufferCommands: false, // Disable Mongoose's buffering. Fails fast if not connected.
         });
 
-        isConnected = true;
+        await mongooseConnectionPromise;
         console.log("Connected to MongoDB");
 
-        // Create indexes
+        // Create indexes - this is generally fine as Mongoose won't recreate them if they exist
         await Promise.all([
             User.createIndexes(),
             Donation.createIndexes(),
@@ -32,29 +41,24 @@ export async function connectDB() {
         ]);
     } catch (error) {
         console.debug("MongoDB connection error:", error);
+        // Reset the promise on error so we can try again
+        mongooseConnectionPromise = null;
         throw error;
     }
 }
 
-// Handle connection errors after initial connection
-mongoose.connection.on("error", (err) => {
-    console.debug("MongoDB connection error:", err);
-    isConnected = false;
-});
-
-mongoose.connection.on("disconnected", () => {
-    console.log("MongoDB disconnected");
-    isConnected = false;
-});
-
-// Handle process termination
+// Handle process termination gracefully
 process.on("SIGINT", async () => {
     try {
-        await mongoose.connection.close();
-        console.log("MongoDB connection closed through app termination");
+        if (mongoose.connection.readyState === 1) {
+            await mongoose.connection.close();
+            console.log(
+                "MongoDB connection closed successfully due to app termination"
+            );
+        }
         process.exit(0);
     } catch (err) {
-        console.debug("Error closing MongoDB connection:", err);
+        console.error("Error closing MongoDB connection:", err);
         process.exit(1);
     }
 });
