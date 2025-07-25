@@ -56,19 +56,43 @@ export const sendETH = async (
         transport: fallback(rpcUrls.map((url) => http(url))),
     });
 
-    const { maxFeePerGas, maxPriorityFeePerGas } =
-        await publicClient.estimateFeesPerGas({
-            type: "eip1559",
-            chain,
-        });
+    let chainType: "legacy" | "eip1559" = "eip1559";
+    let maxFeePerGas: bigint | undefined;
+    let maxPriorityFeePerGas: bigint | undefined;
+    let gasPrice: bigint | undefined;
 
-    const tx = await walletClient.sendTransaction({
-        to: address,
-        value: amount,
-        gas: BigInt(21000),
-        maxFeePerGas,
-        maxPriorityFeePerGas,
-    });
+    try {
+        ({ maxFeePerGas, maxPriorityFeePerGas } =
+            await publicClient.estimateFeesPerGas({
+                type: "eip1559",
+                chain,
+            }));
+    } catch (error) {
+        console.error(error);
+        gasPrice = await publicClient.getGasPrice();
+        chainType = "legacy";
+    }
+
+    let tx: Hex;
+
+    if (chainType === "eip1559") {
+        tx = await walletClient.sendTransaction({
+            to: address,
+            value: amount,
+            gas: BigInt(21000),
+            type: chainType,
+            maxFeePerGas: maxFeePerGas,
+            maxPriorityFeePerGas: maxPriorityFeePerGas,
+        });
+    } else {
+        tx = await walletClient.sendTransaction({
+            to: address,
+            value: amount,
+            gas: BigInt(21000),
+            type: chainType,
+            gasPrice: gasPrice,
+        });
+    }
 
     return tx;
 };
