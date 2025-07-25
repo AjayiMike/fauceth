@@ -2,6 +2,7 @@ import { env } from "@/config/env";
 import {
     Address,
     Chain,
+    createPublicClient,
     createWalletClient,
     fallback,
     Hex,
@@ -50,11 +51,23 @@ export const sendETH = async (
         account: privateKeyToAccount(`0x${env.FAUCET_PK}` as Hex),
         transport: fallback(rpcUrls.map((url) => http(url))),
     });
+    const publicClient = createPublicClient({
+        chain: chain,
+        transport: fallback(rpcUrls.map((url) => http(url))),
+    });
+
+    const { maxFeePerGas, maxPriorityFeePerGas } =
+        await publicClient.estimateFeesPerGas({
+            type: "eip1559",
+            chain,
+        });
 
     const tx = await walletClient.sendTransaction({
         to: address,
         value: amount,
         gas: BigInt(21000),
+        maxFeePerGas,
+        maxPriorityFeePerGas,
     });
 
     return tx;
