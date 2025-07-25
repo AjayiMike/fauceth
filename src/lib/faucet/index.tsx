@@ -54,6 +54,7 @@ export const sendETH = async (
     const tx = await walletClient.sendTransaction({
         to: address,
         value: amount,
+        gas: BigInt(21000),
     });
 
     return tx;
