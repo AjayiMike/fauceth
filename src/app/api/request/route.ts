@@ -51,13 +51,22 @@ export async function POST(req: NextRequest) {
 
                 const checkSummedAddress = getAddress(address);
 
-                // Get IP address from headers or use a development fallback
-                const forwardedFor = req.headers.get("x-forwarded-for");
-                const ipAddress = forwardedFor
-                    ? forwardedFor.split(",")[0].trim() // Get the first IP in the chain
-                    : process.env.NODE_ENV === "development"
-                      ? "127.0.0.1" // Use localhost for development
-                      : "unknown";
+                // Determine client IP in a way that cannot be spoofed by the caller.
+                // Vercel injects `x-vercel-forwarded-for` after terminating TLS, so we trust that first.
+                // We also accept `x-real-ip` from other trusted proxies (e.g. Cloudflare) if present.
+                let ipAddress: string | null =
+                    req.headers.get("x-vercel-forwarded-for") ??
+                    req.headers.get("x-real-ip") ??
+                    (process.env.NODE_ENV === "development"
+                        ? "127.0.0.1"
+                        : null);
+
+                // If multiple IPs are present (unlikely with the trusted headers), take the first.
+                if (ipAddress) {
+                    ipAddress = ipAddress.split(",")[0].trim();
+                } else {
+                    return error("Unable to determine client IP address.", 400);
+                }
 
                 const captchaToken = req.headers.get("captcha-token");
 
