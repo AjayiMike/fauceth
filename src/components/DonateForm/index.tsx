@@ -25,6 +25,8 @@ import {
 } from "../ui/dialog";
 import { getNetworkPublicClient, networkInfoToViemChain } from "@/lib/networks";
 import { Input } from "@/components/ui/input";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { AnalyticsEvents } from "@/hooks/useAnalytics";
 
 type DonationStep = "confirm" | "pending" | "success" | "socials";
 
@@ -59,6 +61,14 @@ const DonateForm = () => {
     });
     const [networkMismatchAlertDismissed, setNetworkMismatchAlertDismissed] =
         useState(false);
+
+    const { trackEvent } = useAnalytics();
+
+    // Add useEffect for modal:
+    useEffect(() => {
+        if (showDonationModal)
+            trackEvent(AnalyticsEvents.MODAL_OPEN, { modal: "donate" }, false); // Basic
+    }, [showDonationModal, trackEvent]);
 
     const insufficientBalance =
         balance !== undefined &&
@@ -241,11 +251,23 @@ const DonateForm = () => {
 
             // Reset form
             setAmount("");
+            trackEvent(
+                AnalyticsEvents.DONATE_SUBMIT_SUCCESS,
+                { hashedTx: txHash },
+                true
+            ); // Advanced
         } catch (err) {
             const error = err as WriteContractErrorType;
             console.error("Donation error:", error);
             toast.error(error.message);
             setShowDonationModal(false);
+            trackEvent(
+                AnalyticsEvents.ERROR_OCCURRED,
+                { type: "donation_error", message: error.message },
+                true
+            );
+        } finally {
+            trackEvent(AnalyticsEvents.DONATE_BUTTON_CLICK, { amount }, false); // Basic
         }
     };
 
@@ -290,6 +312,11 @@ const DonateForm = () => {
 
             toast.success("Social links saved successfully!");
             setCurrentStep("success");
+            trackEvent(
+                AnalyticsEvents.SOCIAL_LINKS_SUBMIT,
+                { linksCount: Object.keys(socialLinks).length },
+                true
+            ); // Advanced
         } catch (error) {
             toast.error("Failed to save social links. Please try again later.");
             console.error("Error saving social links:", error);

@@ -2,16 +2,20 @@
 import React from "react";
 import { useTheme } from "next-themes";
 import { MoonIcon, SunIcon } from "lucide-react";
+import { useAnalytics, AnalyticsEvents } from "@/hooks/useAnalytics";
 
 function ToggleThemeMode() {
     const { theme, setTheme } = useTheme();
+    const { trackEvent } = useAnalytics();
 
     function handleToggleMode() {
-        if (theme === "light") {
-            setTheme("dark");
-        } else {
-            setTheme("light");
-        }
+        const nextTheme = theme === "light" ? "dark" : "light";
+        setTheme(nextTheme);
+        trackEvent(
+            AnalyticsEvents.THEME_TOGGLE,
+            { newTheme: nextTheme },
+            false
+        ); // Basic
     }
     return (
         <button

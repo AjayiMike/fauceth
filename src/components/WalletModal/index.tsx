@@ -11,21 +11,29 @@ import { Button } from "@/components/ui/button";
 import { useConnection } from "@/providers/ConnectionProvider";
 import { useCallback, useState } from "react";
 import { ChevronDown, ChevronUp, Wallet } from "lucide-react";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { AnalyticsEvents } from "@/hooks/useAnalytics";
 
 const WalletModal = () => {
     const { availableProviders, handleConnect } = useConnection();
     const [showAll, setShowAll] = useState(false);
     const INITIAL_DISPLAY_COUNT = 3;
+    const { trackEvent } = useAnalytics();
 
     const connectWallet = useCallback(
         async (provider: EIP6963ProviderDetail) => {
             try {
                 await handleConnect(provider);
+                trackEvent(
+                    AnalyticsEvents.WALLET_CONNECT,
+                    { provider: provider.info.name },
+                    true
+                );
             } catch (error) {
                 console.debug(error);
             }
         },
-        [handleConnect]
+        [handleConnect, trackEvent]
     );
 
     const displayedProviders = showAll
