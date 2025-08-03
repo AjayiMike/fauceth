@@ -4,6 +4,7 @@ import "./globals.css";
 import { ConnectionProvider } from "@/providers/ConnectionProvider";
 import AppQueryClientProvider from "@/providers/QueryClient";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import ClientLayout from "@/components/ClientLayout";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -110,7 +111,7 @@ export default function RootLayout({
                 >
                     <ConnectionProvider>
                         <AppQueryClientProvider>
-                            {children}
+                            <ClientLayout>{children}</ClientLayout>
                         </AppQueryClientProvider>
                     </ConnectionProvider>
                 </ThemeProvider>
