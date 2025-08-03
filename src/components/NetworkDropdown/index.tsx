@@ -19,6 +19,7 @@ import { useNetworksStore } from "@/lib/store/networksStore";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useDebounce } from "@/hooks/useDebounce";
 import { IAugmentedNetwork } from "@/types/network";
+import { useAnalytics, AnalyticsEvents } from "@/hooks/useAnalytics";
 
 const NetworkDropdown = () => {
     const [open, setOpen] = useState(false);
@@ -93,6 +94,8 @@ const NetworkDropdown = () => {
     }, []);
 
     const items = rowVirtualizer.getVirtualItems();
+
+    const { trackEvent } = useAnalytics();
 
     return (
         <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -182,6 +185,14 @@ const NetworkDropdown = () => {
                                                     ) => {
                                                         setSelectedNetwork(net);
                                                         setOpen(false);
+                                                        trackEvent(
+                                                            AnalyticsEvents.NETWORK_SELECTED,
+                                                            {
+                                                                networkId:
+                                                                    net.chainId,
+                                                            },
+                                                            false
+                                                        );
                                                     }}
                                                 />
                                             </div>

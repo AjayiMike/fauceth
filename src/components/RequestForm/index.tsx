@@ -33,6 +33,16 @@ import { INetwork } from "@/types/network";
 import useCopyClipboard from "@/hooks/useCopyClipboard";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { getPreferredExplorer } from "@/lib/networks";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { AnalyticsEvents } from "@/hooks/useAnalytics";
+
+const hashValue = async (value: string) => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(value);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+};
 
 const RequestForm = ({
     balance,
@@ -73,6 +83,8 @@ const RequestForm = ({
     const [isCopied, copyToClipboard] = useCopyClipboard(2000);
 
     const hCaptchaRef = useRef<HCaptcha>(null);
+
+    const { trackEvent } = useAnalytics();
 
     const renderAlert = () => {
         if (
@@ -175,7 +187,17 @@ const RequestForm = ({
 
         if (!isAddress(value)) {
             setAddressError("Invalid Ethereum address");
+            trackEvent(
+                AnalyticsEvents.ERROR_OCCURRED,
+                { type: "invalid_address" },
+                true
+            );
         }
+        trackEvent(
+            AnalyticsEvents.ADDRESS_INPUT_CHANGE,
+            { length: value.length },
+            false
+        ); // Basic
     };
 
     const isValid = !addressError && isAddress(address);
@@ -217,16 +239,32 @@ const RequestForm = ({
             // Reset form after successful request
             setAddress("");
             setAddressError(null);
+            trackEvent(
+                AnalyticsEvents.REQUEST_SUBMIT_SUCCESS,
+                { hashedAddress: await hashValue(address) },
+                true
+            ); // Advanced, with client-side hash
         } catch (err) {
             console.error("Request error:", err);
             if (err instanceof Error) {
                 toast.error(err.message);
+                trackEvent(
+                    AnalyticsEvents.ABUSE_SIGNAL,
+                    { type: "request_failure", message: err.message },
+                    true
+                );
+                trackEvent(
+                    AnalyticsEvents.REQUEST_SUBMIT_ERROR,
+                    { errorType: err.message },
+                    true
+                ); // Advanced
             } else {
                 toast.error("An unknown error occurred");
             }
         } finally {
             hCaptchaRef.current?.resetCaptcha();
             setIsLoading(false);
+            trackEvent(AnalyticsEvents.REQUEST_BUTTON_CLICK, {}, false); // Basic
         }
     };
 
@@ -235,7 +273,12 @@ const RequestForm = ({
     };
 
     const onHCaptchaError = (err: string) => {
-        toast.error(`hCaptcha Error: ${err}`);
+        toast.error(err);
+        trackEvent(
+            AnalyticsEvents.ABUSE_SIGNAL,
+            { type: "captcha_error", message: err },
+            true
+        );
     };
 
     return (
