@@ -51,21 +51,57 @@ export async function POST(req: NextRequest) {
 
                 const checkSummedAddress = getAddress(address);
 
-                // Determine client IP in a way that cannot be spoofed by the caller.
-                // Vercel injects `x-vercel-forwarded-for` after terminating TLS, so we trust that first.
-                // We also accept `x-real-ip` from other trusted proxies (e.g. Cloudflare) if present.
-                let ipAddress: string | null =
-                    req.headers.get("x-vercel-forwarded-for") ??
-                    req.headers.get("x-real-ip") ??
-                    (process.env.NODE_ENV === "development"
-                        ? "127.0.0.1"
-                        : null);
+                // Enhanced IP detection logic with more robust validation
+                // Vercel injects `x-vercel-forwarded-for` after terminating TLS, so we prioritize that
+                // We also check additional headers for a more complete picture
+                let ipAddress: string | null = null;
+                const vercelForwardedFor = req.headers.get(
+                    "x-vercel-forwarded-for"
+                );
+                const realIp = req.headers.get("x-real-ip");
+                const cfConnectingIp = req.headers.get("cf-connecting-ip"); // Cloudflare specific
+                const xForwardedFor = req.headers.get("x-forwarded-for");
 
-                // If multiple IPs are present (unlikely with the trusted headers), take the first.
-                if (ipAddress) {
-                    ipAddress = ipAddress.split(",")[0].trim();
-                } else {
-                    return error("Unable to determine client IP address.", 400);
+                // Prioritize headers that are harder to spoof
+                if (vercelForwardedFor) {
+                    ipAddress = vercelForwardedFor.split(",")[0].trim();
+                } else if (cfConnectingIp) {
+                    ipAddress = cfConnectingIp.trim();
+                } else if (realIp) {
+                    ipAddress = realIp.trim();
+                } else if (xForwardedFor) {
+                    ipAddress = xForwardedFor.split(",")[0].trim();
+                } else if (process.env.NODE_ENV === "development") {
+                    ipAddress = "127.0.0.1";
+                }
+
+                // Validate the IP address format for additional security
+                const ipv4Regex =
+                    /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+
+                // More comprehensive IPv6 regex that handles all valid formats including ::1
+                const ipv6Regex =
+                    /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4})?:)?((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9]))$/;
+
+                // Special case for local development - accept localhost IPv6
+                const isLocalhost =
+                    ipAddress === "::1" &&
+                    process.env.NODE_ENV === "development";
+
+                if (
+                    !ipAddress ||
+                    (!isLocalhost &&
+                        !ipv4Regex.test(ipAddress) &&
+                        !ipv6Regex.test(ipAddress))
+                ) {
+                    console.warn(
+                        "Invalid or suspicious IP format detected:",
+                        ipAddress
+                    );
+                    return error(
+                        "Unable to determine valid client IP address.",
+                        400
+                    );
                 }
 
                 const captchaToken = req.headers.get("captcha-token");
@@ -77,16 +113,46 @@ export async function POST(req: NextRequest) {
                     );
                 }
 
+                const expectedHostname =
+                    process.env.NODE_ENV === "development"
+                        ? "localhost"
+                        : "fauceth.xyz";
+
                 const hCaptchaResponse = await verifyHCaptcha(
                     captchaToken,
                     env.HCAPTCHA_SECRET as string,
                     env.HCAPTCHA_SITE_KEY as string,
-                    ipAddress
+                    ipAddress,
+                    expectedHostname
                 );
 
+                console.log("hCaptchaResponse", hCaptchaResponse);
+
                 if (!hCaptchaResponse.success) {
+                    // Log detailed information about failed captcha verification
+                    console.warn("hCaptcha verification failed:", {
+                        ipAddress,
+                        errorCode: hCaptchaResponse.errorCode,
+                        hostname: hCaptchaResponse.hostname,
+                        message: hCaptchaResponse.message,
+                    });
+
+                    // Provide specific error message based on the failure reason
+                    let errorMessage =
+                        "Security verification failed: hCaptcha validation was unsuccessful.";
+
+                    if (hCaptchaResponse.errorCode === "token-reuse") {
+                        errorMessage =
+                            "Security verification failed: This captcha token has already been used.";
+                    } else if (
+                        hCaptchaResponse.errorCode === "hostname-mismatch"
+                    ) {
+                        errorMessage =
+                            "Security verification failed: Captcha was not completed on the legitimate site.";
+                    }
+
                     return error(
-                        "Security verification failed: hCaptcha validation was unsuccessful. Please refresh the page and complete the hCaptcha challenge again.",
+                        `${errorMessage} Please refresh the page and complete the hCaptcha challenge again.`,
                         403
                     );
                 }
