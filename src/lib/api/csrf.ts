@@ -1,5 +1,4 @@
 import { cookies } from "next/headers";
-import Cookies from "js-cookie";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function validateCsrf(
@@ -18,5 +17,3 @@ export async function validateCsrf(
     }
     return null; // validated
 }
-
-export const getCsrfToken = () => Cookies.get("csrf_token_read") || "";

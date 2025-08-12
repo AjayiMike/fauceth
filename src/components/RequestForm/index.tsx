@@ -35,7 +35,9 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { getPreferredExplorer } from "@/lib/networks";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { AnalyticsEvents } from "@/hooks/useAnalytics";
-import { getCsrfToken } from "@/lib/api/csrf";
+import Cookies from "js-cookie";
+
+const getCsrfToken = () => Cookies.get("csrf_token_read") || "";
 
 const hashValue = async (value: string) => {
     const encoder = new TextEncoder();
