@@ -7,6 +7,7 @@ import {
     TableHead,
     TableHeader,
     TableRow,
+    TableFooter,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -17,11 +18,12 @@ import {
     ExternalLink,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useCallback, useEffect, useState, memo } from "react";
+import { useCallback, useState, memo, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { truncateAddress } from "@/lib/utils/formatting";
 import { useNetworksStore } from "@/lib/store/networksStore";
 import { getPreferredExplorer } from "@/lib/networks";
+import { useQuery } from "@tanstack/react-query";
 
 interface Transaction {
     _id: string;
@@ -40,15 +42,23 @@ const TransactionsTable = () => {
     );
     const [requests, setRequests] = useState<Transaction[]>([]);
     const [donations, setDonations] = useState<Transaction[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [limit, setLimit] = useState<number>(10);
+    const [page, setPage] = useState<number>(1);
     const [error, setError] = useState<string | null>(null);
+    const [totalPages, setTotalPages] = useState<number>(1);
+    const [totalItems, setTotalItems] = useState<number>(0);
     const networks = useNetworksStore((state) => state.networks);
 
-    const fetchTransactions = async (type: "requests" | "donations") => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const response = await fetch(`/api/${type}?page=1&limit=10`);
+    const {
+        data,
+        isLoading,
+        error: queryError,
+    } = useQuery({
+        queryKey: ["transactions", activeTab, page, limit],
+        queryFn: async () => {
+            const response = await fetch(
+                `/api/${activeTab}?page=${page}&limit=${limit}`
+            );
             const result = await response.json();
 
             if (!response.ok) {
@@ -57,28 +67,38 @@ const TransactionsTable = () => {
                 );
             }
 
-            const transactions = result.data.data;
-
-            if (type === "requests") {
-                setRequests(transactions);
-            } else {
-                setDonations(transactions);
-            }
-        } catch (err) {
-            console.error(`Error fetching ${type}:`, err);
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : "Failed to fetch transactions"
-            );
-        } finally {
-            setIsLoading(false);
-        }
-    };
+            return {
+                transactions: result.data.data,
+                totalPages: result.data.totalPages,
+                total: result.data.total,
+            };
+        },
+        refetchInterval: 4000,
+    });
 
     useEffect(() => {
-        fetchTransactions(activeTab);
-    }, [activeTab]);
+        if (data) {
+            if (activeTab === "requests") {
+                setRequests(data.transactions);
+            } else {
+                setDonations(data.transactions);
+            }
+            setTotalPages(data.totalPages);
+            setTotalItems(data.total);
+            setError(null);
+        }
+    }, [data, activeTab]);
+
+    useEffect(() => {
+        if (queryError) {
+            const errorMessage =
+                queryError instanceof Error
+                    ? queryError.message
+                    : "Failed to fetch transactions";
+            setError(errorMessage);
+            console.error(`Error fetching ${activeTab}:`, queryError);
+        }
+    }, [queryError, activeTab]);
 
     const MotionTableRow = motion(TableRow);
 
@@ -244,6 +264,69 @@ const TransactionsTable = () => {
                             <TableBody>
                                 {renderTransactions(requests)}
                             </TableBody>
+                            <TableFooter>
+                                <TableRow>
+                                    <TableCell colSpan={5} className="py-2">
+                                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <span>Rows per page:</span>
+                                                <select
+                                                    className="border rounded px-2 py-1 bg-background"
+                                                    value={limit}
+                                                    onChange={(e) => {
+                                                        setLimit(
+                                                            Number(
+                                                                e.target.value
+                                                            )
+                                                        );
+                                                        setPage(1);
+                                                    }}
+                                                >
+                                                    {[5, 10, 20, 50].map(
+                                                        (opt) => (
+                                                            <option
+                                                                key={opt}
+                                                                value={opt}
+                                                            >
+                                                                {opt}
+                                                            </option>
+                                                        )
+                                                    )}
+                                                </select>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    className="px-2 py-1 border rounded disabled:opacity-50"
+                                                    onClick={() =>
+                                                        setPage(page - 1)
+                                                    }
+                                                    disabled={
+                                                        page <= 1 || isLoading
+                                                    }
+                                                >
+                                                    Previous
+                                                </button>
+                                                <span>
+                                                    Page {page} of {totalPages}{" "}
+                                                    ({totalItems} total)
+                                                </span>
+                                                <button
+                                                    className="px-2 py-1 border rounded disabled:opacity-50"
+                                                    onClick={() =>
+                                                        setPage(page + 1)
+                                                    }
+                                                    disabled={
+                                                        page >= totalPages ||
+                                                        isLoading
+                                                    }
+                                                >
+                                                    Next
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            </TableFooter>
                         </Table>
                     </div>
                 </TabsContent>
@@ -272,6 +355,69 @@ const TransactionsTable = () => {
                             <TableBody>
                                 {renderTransactions(donations)}
                             </TableBody>
+                            <TableFooter>
+                                <TableRow>
+                                    <TableCell colSpan={5} className="py-2">
+                                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <span>Rows per page:</span>
+                                                <select
+                                                    className="border rounded px-2 py-1 bg-background"
+                                                    value={limit}
+                                                    onChange={(e) => {
+                                                        setLimit(
+                                                            Number(
+                                                                e.target.value
+                                                            )
+                                                        );
+                                                        setPage(1);
+                                                    }}
+                                                >
+                                                    {[5, 10, 20, 50].map(
+                                                        (opt) => (
+                                                            <option
+                                                                key={opt}
+                                                                value={opt}
+                                                            >
+                                                                {opt}
+                                                            </option>
+                                                        )
+                                                    )}
+                                                </select>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    className="px-2 py-1 border rounded disabled:opacity-50"
+                                                    onClick={() =>
+                                                        setPage(page - 1)
+                                                    }
+                                                    disabled={
+                                                        page <= 1 || isLoading
+                                                    }
+                                                >
+                                                    Previous
+                                                </button>
+                                                <span>
+                                                    Page {page} of {totalPages}{" "}
+                                                    ({totalItems} total)
+                                                </span>
+                                                <button
+                                                    className="px-2 py-1 border rounded disabled:opacity-50"
+                                                    onClick={() =>
+                                                        setPage(page + 1)
+                                                    }
+                                                    disabled={
+                                                        page >= totalPages ||
+                                                        isLoading
+                                                    }
+                                                >
+                                                    Next
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            </TableFooter>
                         </Table>
                     </div>
                 </TabsContent>
