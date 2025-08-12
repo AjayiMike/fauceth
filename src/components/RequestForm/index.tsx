@@ -35,6 +35,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { getPreferredExplorer } from "@/lib/networks";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { AnalyticsEvents } from "@/hooks/useAnalytics";
+import { getCsrfToken } from "@/lib/api/csrf";
 
 const hashValue = async (value: string) => {
     const encoder = new TextEncoder();
@@ -217,6 +218,7 @@ const RequestForm = ({
                 headers: {
                     "Content-Type": "application/json",
                     "captcha-token": hCaptchaToken || "",
+                    "x-csrf-token": getCsrfToken(),
                 },
                 body: JSON.stringify({
                     address,
