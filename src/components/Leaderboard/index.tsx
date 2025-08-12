@@ -47,6 +47,7 @@ const Leaderboard = () => {
             const data = await response.json();
             return data.data;
         },
+        refetchInterval: 4000,
     });
 
     if (error) {
