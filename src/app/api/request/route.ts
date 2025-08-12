@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
                 const expectedHostname =
                     process.env.NODE_ENV === "development"
                         ? "localhost"
-                        : "fauceth.xyz";
+                        : "fauceth.dev";
 
                 const hCaptchaResponse = await verifyHCaptcha(
                     captchaToken,
