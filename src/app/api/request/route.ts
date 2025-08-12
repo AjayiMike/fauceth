@@ -25,6 +25,7 @@ import { verifyHCaptcha } from "@/lib/captcha/hCaptcha";
 import { formatDistanceToNow } from "date-fns";
 import { env } from "@/config/env";
 import { ClientSession } from "mongodb";
+import { validateCsrf } from "@/lib/api/csrf";
 
 const requestBodySchema = z.object({
     networkId: z.number().int().positive(),
@@ -44,6 +45,12 @@ export async function POST(req: NextRequest) {
             req,
             async (session: ClientSession, req: NextRequest) => {
                 const body = await req.json();
+                const csrfError = await validateCsrf(req);
+
+                if (csrfError) {
+                    return csrfError;
+                }
+
                 const { networkId, address } = validateRequest<RequestBody>(
                     body,
                     requestBodySchema.parse
