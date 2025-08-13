@@ -45,7 +45,7 @@ Follow these steps to set up FaucETH on your local machine.
 #### 2. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/fauceth.git
+git clone https://github.com/ajayimike/fauceth.git
 cd fauceth
 ```
 
