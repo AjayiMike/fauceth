@@ -85,4 +85,11 @@ export const env = {
         "NEXT_PUBLIC_DISTINCT_NETWORK_LIMIT",
         process.env.NEXT_PUBLIC_DISTINCT_NETWORK_LIMIT || "2"
     ),
+
+    NEXT_PUBLIC_MAX_ALLOWED_BALANCE: getEnvValue(
+        "NEXT_PUBLIC_MAX_ALLOWED_BALANCE",
+        process.env.NEXT_PUBLIC_MAX_ALLOWED_BALANCE,
+        true,
+        "2"
+    ),
 };
