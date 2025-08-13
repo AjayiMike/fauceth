@@ -67,7 +67,6 @@ export async function POST(req: NextRequest) {
                 );
                 const realIp = req.headers.get("x-real-ip");
                 const cfConnectingIp = req.headers.get("cf-connecting-ip"); // Cloudflare specific
-                const xForwardedFor = req.headers.get("x-forwarded-for");
 
                 // Prioritize headers that are harder to spoof
                 if (vercelForwardedFor) {
@@ -76,8 +75,6 @@ export async function POST(req: NextRequest) {
                     ipAddress = cfConnectingIp.trim();
                 } else if (realIp) {
                     ipAddress = realIp.trim();
-                } else if (xForwardedFor) {
-                    ipAddress = xForwardedFor.split(",")[0].trim();
                 } else if (process.env.NODE_ENV === "development") {
                     ipAddress = "127.0.0.1";
                 }
