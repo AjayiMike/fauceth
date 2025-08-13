@@ -262,6 +262,20 @@ export async function POST(req: NextRequest) {
                     );
                 }
 
+                const userBalance = await getETHBalance(
+                    checkSummedAddress,
+                    workingRPCs
+                );
+
+                if (
+                    userBalance >= Number(env.NEXT_PUBLIC_MAX_ALLOWED_BALANCE)
+                ) {
+                    return error(
+                        `Your wallet balance (${userBalance} ETH) exceeds the maximum allowed balance of ${env.NEXT_PUBLIC_MAX_ALLOWED_BALANCE} ETH. Please withdraw some funds before requesting from the faucet.`,
+                        403
+                    );
+                }
+
                 // Get faucet's ETH balance
                 const balance = await getETHBalance(
                     env.FAUCET_ADDRESS as Address,
