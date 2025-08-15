@@ -11,7 +11,6 @@ import {
 import { z } from "zod";
 import { Address, getAddress } from "viem";
 import {
-    filterWorkingRPCs,
     getETHBalance,
     getNetworkInfo,
     networkInfoToViemChain,
@@ -253,18 +252,10 @@ export async function POST(req: NextRequest) {
 
                 // Get network details and working RPCs
                 const networkDetails = await getNetworkInfo(networkId);
-                const workingRPCs = await filterWorkingRPCs(networkDetails.rpc);
 
-                if (workingRPCs.length === 0) {
-                    return error(
-                        "Network connectivity issue. We're having trouble connecting to the blockchain right now. Please try again in a few minutes.",
-                        503
-                    );
-                }
-
-                const userBalance = await getETHBalance(
+                const { balance: userBalance, urls } = await getETHBalance(
                     checkSummedAddress,
-                    workingRPCs
+                    networkDetails.rpc
                 );
 
                 if (
@@ -277,9 +268,9 @@ export async function POST(req: NextRequest) {
                 }
 
                 // Get faucet's ETH balance
-                const balance = await getETHBalance(
+                const { balance } = await getETHBalance(
                     env.FAUCET_ADDRESS as Address,
-                    workingRPCs
+                    urls
                 );
 
                 // Calculate claim amount
@@ -302,7 +293,7 @@ export async function POST(req: NextRequest) {
                 const txHash = await sendETH(
                     checkSummedAddress,
                     parseEther(claimAmount.toString()),
-                    workingRPCs,
+                    urls,
                     networkInfoToViemChain(networkDetails)
                 );
 

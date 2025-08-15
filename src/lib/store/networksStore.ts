@@ -6,7 +6,7 @@ import {
     NetworkHealth,
 } from "@/types/network";
 import { holesky, sepolia } from "viem/chains";
-import { filterWorkingRPCs, getETHBalance } from "@/lib/networks";
+import { getETHBalance } from "@/lib/networks";
 import { env } from "@/config/env";
 
 const SELECTED_NETWORK_CHAIN_ID_KEY = "selectedNetworkChainId";
@@ -39,15 +39,9 @@ interface NetworksState {
 }
 
 const selectInitialNetwork = (
-    networks: INetwork[],
-    details: Record<number, NetworkDetails>
+    details: Record<number, IAugmentedNetwork>
 ): IAugmentedNetwork | null => {
-    if (networks.length === 0) return null;
-
-    const composeAugmentedNetwork = (network: INetwork): IAugmentedNetwork => ({
-        ...network,
-        ...details[network.chainId],
-    });
+    if (Object.keys(details).length === 0) return null;
 
     if (typeof window !== "undefined") {
         const storedChainId = localStorage.getItem(
@@ -55,25 +49,14 @@ const selectInitialNetwork = (
         );
         if (storedChainId) {
             const chainId = parseInt(storedChainId, 10);
-            const persistedNetwork = networks.find(
-                (n) => n.chainId === chainId
-            );
+            const persistedNetwork = details[chainId];
             // 1. If the network is in the local storage, return it
-            if (persistedNetwork)
-                return composeAugmentedNetwork(persistedNetwork);
+            if (persistedNetwork) return persistedNetwork;
         }
     }
 
-    // 2. Fallback to Sepolia if available
-    const sepoliaNetwork = networks.find((n) => n.chainId === sepolia.id);
-    if (sepoliaNetwork) return composeAugmentedNetwork(sepoliaNetwork);
-
-    // 3. Fallback to Holesky if available
-    const holeskyNetwork = networks.find((n) => n.chainId === holesky.id);
-    if (holeskyNetwork) return composeAugmentedNetwork(holeskyNetwork);
-
-    // 4. Fallback to the first network
-    return composeAugmentedNetwork(networks[0]);
+    // Fallback to either (if available) Sepolia, Holesky, or first network
+    return details[sepolia.id] || details[holesky.id] || details[0];
 };
 
 export const useNetworksStore = create<NetworksState>((set, get) => ({
@@ -107,20 +90,17 @@ export const useNetworksStore = create<NetworksState>((set, get) => ({
 
             const rawNetworks: INetwork[] = data.data;
 
-            const initialDetails: Record<number, NetworkDetails> = {};
+            const initialDetails: Record<number, IAugmentedNetwork> = {};
             rawNetworks.forEach((network) => {
                 initialDetails[network.chainId] = {
                     health: "pending",
                     faucetState: "loading",
                     balance: null,
-                    rpc: network.rpc,
+                    ...network,
                 };
             });
 
-            const initialSelected = selectInitialNetwork(
-                rawNetworks,
-                initialDetails
-            );
+            const initialSelected = selectInitialNetwork(initialDetails);
             set({
                 networks: rawNetworks,
                 networkDetails: initialDetails,
@@ -128,49 +108,46 @@ export const useNetworksStore = create<NetworksState>((set, get) => ({
                 selectedNetwork: initialSelected,
             });
 
-            const validateNetwork = async (network: INetwork) => {
-                const workingRPCs = await filterWorkingRPCs(network.rpc);
-                if (workingRPCs.length === 0) {
-                    get()._updateNetworkDetails(network.chainId, {
-                        health: "offline",
-                        faucetState: "error",
-                    });
-                    return;
-                }
+            const validateNetwork = (network: INetwork) => {
+                getETHBalance(env.FAUCET_ADDRESS as `0x${string}`, network.rpc)
+                    .then(({ balance, urls }) => {
+                        let health: NetworkHealth;
+                        let faucetState: FaucetState;
 
-                get()._updateNetworkDetails(network.chainId, {
-                    health: "online",
-                    rpc: workingRPCs,
-                });
+                        if (urls.length === 0) {
+                            health = "offline";
+                            faucetState = "error";
+                        } else {
+                            health = "online";
+                            faucetState = "ok";
+                        }
+                        if (balance === 0) faucetState = "empty";
+                        else if (balance < Number(env.MIN_BALANCE))
+                            faucetState = "low";
 
-                try {
-                    const balance = await getETHBalance(
-                        env.FAUCET_ADDRESS as `0x${string}`,
-                        workingRPCs
-                    );
-                    let faucetState: FaucetState = "ok";
-                    if (balance === 0) faucetState = "empty";
-                    else if (balance < Number(env.MIN_BALANCE))
-                        faucetState = "low";
-                    get()._updateNetworkDetails(network.chainId, {
-                        faucetState,
-                        balance,
+                        get()._updateNetworkDetails(network.chainId, {
+                            health,
+                            rpc: urls,
+                            faucetState,
+                            balance,
+                        });
+                    })
+                    .catch((balanceError) => {
+                        console.error(
+                            `Balance fetch failed for ${network.name}:`,
+                            balanceError
+                        );
+                        get()._updateNetworkDetails(network.chainId, {
+                            health: "offline",
+                            faucetState: "error",
+                            balance: null,
+                        });
                     });
-                } catch (balanceError) {
-                    console.error(
-                        `Balance fetch failed for ${network.name}:`,
-                        balanceError
-                    );
-                    get()._updateNetworkDetails(network.chainId, {
-                        faucetState: "error",
-                        balance: null,
-                    });
-                }
             };
 
             // Tier 1: Prioritize validation of the selected network
             if (initialSelected) {
-                await validateNetwork(initialSelected);
+                validateNetwork(initialSelected);
             }
 
             const remainingNetworks = rawNetworks.filter(
@@ -184,7 +161,7 @@ export const useNetworksStore = create<NetworksState>((set, get) => ({
             );
 
             // Tier 2: Validate common networks in parallel
-            await Promise.all(priorityNetworks.map(validateNetwork));
+            priorityNetworks.map(validateNetwork);
 
             otherNetworks.forEach(validateNetwork);
         } catch (error) {

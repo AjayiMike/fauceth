@@ -41,11 +41,12 @@ export const useNetworkBalances = (networks: INetwork[]) => {
                 queryKey: ["networkBalance", network.chainId],
                 queryFn: async () => {
                     try {
-                        return await getETHBalance(
+                        const { balance } = await getETHBalance(
                             env.FAUCET_ADDRESS as Address,
                             network.rpc,
                             network.nativeCurrency?.decimals || 18
                         );
+                        return balance;
                     } catch (error) {
                         console.debug(
                             `Error prefetching balance for network ${network.name}:`,
@@ -74,11 +75,16 @@ export const useNetworkBalances = (networks: INetwork[]) => {
         queries: networks.map((network) => ({
             queryKey: ["networkBalance", network.chainId],
             queryFn: async () => {
-                return await getETHBalance(
-                    env.FAUCET_ADDRESS as Address,
-                    network.rpc,
-                    network.nativeCurrency?.decimals || 18
-                );
+                try {
+                    const { balance } = await getETHBalance(
+                        env.FAUCET_ADDRESS as Address,
+                        network.rpc,
+                        network.nativeCurrency?.decimals || 18
+                    );
+                    return balance;
+                } catch (error) {
+                    console.log("networkQuery failed", error);
+                }
             },
             staleTime: Infinity, // Never consider data stale
             gcTime: 24 * 60 * 60 * 1000, // Keep in cache for 24 hours

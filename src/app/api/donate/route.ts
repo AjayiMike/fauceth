@@ -9,7 +9,7 @@ import { donationZodSchema } from "@/lib/db/models/donation";
 import { z } from "zod";
 import { Address, checksumAddress, formatUnits, Hex, getAddress } from "viem";
 import {
-    filterWorkingRPCs,
+    getETHBalance,
     getNetworkInfo,
     getTransaction,
     isMatchingAddress,
@@ -72,7 +72,10 @@ export const POST = async (req: NextRequest) =>
             }
 
             // filter working RPCs
-            const workingRPCURLs = await filterWorkingRPCs(networkDetails.rpc);
+            const { urls: workingRPCURLs } = await getETHBalance(
+                env.FAUCET_ADDRESS as `0x${string}`,
+                networkDetails.rpc
+            );
             if (workingRPCURLs.length === 0) {
                 return error(
                     `Network connectivity issue with ${networkDetails.name}. We're unable to verify your transaction at this time. Please try again later.${contactSupportMessage}`,

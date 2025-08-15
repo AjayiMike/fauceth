@@ -1,7 +1,8 @@
 import { success, error } from "@/lib/api/response";
 import { HealthCheckResponse, HealthCheckStatus } from "@/lib/api/types";
-import { filterWorkingRPCs, getNetworkInfo } from "@/lib/networks";
+import { getETHBalance, getNetworkInfo } from "@/lib/networks";
 import { withDB } from "@/lib/db/with-db";
+import { env } from "@/config/env";
 
 export async function GET() {
     return withDB(async () => {
@@ -14,7 +15,10 @@ export async function GET() {
                 status = HealthCheckStatus.Degraded;
             }
 
-            const workingRPCs = await filterWorkingRPCs(networkDetails.rpc);
+            const { urls: workingRPCs } = await getETHBalance(
+                env.FAUCET_ADDRESS as `0x${string}`,
+                networkDetails.rpc
+            );
             if (workingRPCs.length === 0) {
                 status = HealthCheckStatus.Degraded;
             }
