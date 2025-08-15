@@ -74,7 +74,9 @@ export const POST = async (req: NextRequest) =>
             // filter working RPCs
             const { urls: workingRPCURLs } = await getETHBalance(
                 env.FAUCET_ADDRESS as `0x${string}`,
-                networkDetails.rpc
+                networkDetails.rpc,
+                undefined,
+                true
             );
             if (workingRPCURLs.length === 0) {
                 return error(

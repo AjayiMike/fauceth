@@ -17,7 +17,9 @@ export async function GET() {
 
             const { urls: workingRPCs } = await getETHBalance(
                 env.FAUCET_ADDRESS as `0x${string}`,
-                networkDetails.rpc
+                networkDetails.rpc,
+                undefined,
+                true
             );
             if (workingRPCs.length === 0) {
                 status = HealthCheckStatus.Degraded;
