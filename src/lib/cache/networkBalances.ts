@@ -55,7 +55,7 @@ export const getNetworkBalance = async (
 
     try {
         // Fetch the balance
-        const balance = await getETHBalance(
+        const { balance } = await getETHBalance(
             env.FAUCET_ADDRESS as Address,
             rpcUrls,
             decimals

@@ -89,7 +89,7 @@ export const env = {
     NEXT_PUBLIC_MAX_ALLOWED_BALANCE: getEnvValue(
         "NEXT_PUBLIC_MAX_ALLOWED_BALANCE",
         process.env.NEXT_PUBLIC_MAX_ALLOWED_BALANCE,
-        true,
+        false, //set required to false since there's a default value
         "2"
     ),
 };
