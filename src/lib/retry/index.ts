@@ -1,6 +1,6 @@
 // Configuration constants
 const CONFIG = {
-    MAX_RETRIES: 3,
+    MAX_RETRIES: 2,
     RETRY_DELAY: 1000, // milliseconds
 } as const;
 
