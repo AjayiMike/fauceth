@@ -312,8 +312,8 @@ const RequestForm = ({
                             />
                             <AlertDescription className="text-blue-600/80">
                                 To request funds, you need a Gitcoin Passport
-                                score of at least 2 or to have made a donation
-                                of at least 2 ETH on any network.
+                                score of at least {env.PASSPORT_SCORE_THRESHOLD}
+                                .
                             </AlertDescription>
                             <div className="mt-4 flex gap-2">
                                 <Button variant="outline" size="sm" asChild>
@@ -324,9 +324,6 @@ const RequestForm = ({
                                     >
                                         Learn more about Passport
                                     </a>
-                                </Button>
-                                <Button variant="outline" size="sm" asChild>
-                                    <a href="?tab=donate">Donate now</a>
                                 </Button>
                             </div>
                         </Alert>
