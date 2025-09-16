@@ -46,88 +46,38 @@ const rpcTestCache: Map<string, { result: boolean; timestamp: number }> =
     new Map();
 
 /**
- * Tests a RPC endpoint to see if it is working.
- * @param url - The URL of the RPC endpoint to test.
- * @returns True if the RPC endpoint is working, false otherwise.
+ * Extracts result and cache rpc URL
+ * @param url - The RPC URL associated with the response
+ * @param response - The response object
+ * @param now (optional) - timestamp of when the response was obtained
+ * @returns ok bool, and the result string
  */
-export const testRPCEndpoint = async (url: string): Promise<boolean> => {
-    // Check cache first
+const processRPCResponse = async (
+    url: string,
+    response: Response,
+    now?: number
+): Promise<{ ok: boolean; result: string }> => {
+    if (!response.ok) {
+        rpcTestCache.set(url, { result: false, timestamp: now ?? Date.now() });
+        return { ok: false, result: "" };
+    }
+
+    const data = await response.json();
+    const result = data.result !== undefined && !data.error;
+
+    // Cache the result
+    rpcTestCache.set(url, { result, timestamp: now ?? Date.now() });
+    return { ok: true, result: data.result };
+};
+
+const isURLInCache = (url: string): boolean => {
     const cached = rpcTestCache.get(url);
     const now = Date.now();
 
     if (cached && now - cached.timestamp < CONFIG.RPC_CACHE_DURATION) {
         return cached.result;
     }
-
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(
-            () => controller.abort(),
-            CONFIG.RPC_TEST_TIMEOUT
-        );
-
-        const response = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                jsonrpc: "2.0",
-                method: "eth_blockNumber",
-                params: [],
-                id: 1,
-            }),
-            signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-            rpcTestCache.set(url, { result: false, timestamp: now });
-            return false;
-        }
-
-        const data = await response.json();
-        const result = data.result !== undefined && !data.error;
-
-        // Cache the result
-        rpcTestCache.set(url, { result, timestamp: now });
-        return result;
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-        // Cache the failure
-        rpcTestCache.set(url, { result: false, timestamp: now });
-        return false;
-    }
-};
-
-/**
- * Filters a list of RPC URLs to only include working ones.
- * @param urls - The list of RPC URLs to filter.
- * @returns The list of working RPC URLs.
- */
-export const filterWorkingRPCs = async (urls: string[]): Promise<string[]> => {
-    // Filter out template URLs first
-    const candidateUrls = urls.filter(
-        (url) => !url.includes("API_KEY") && !url.startsWith("wss://")
-    );
-
-    const results = await Promise.allSettled(
-        candidateUrls.map(async (url) => ({
-            url,
-            works: await testRPCEndpoint(url),
-        }))
-    );
-
-    return results
-        .filter(
-            (
-                result
-            ): result is PromiseFulfilledResult<{
-                url: string;
-                works: boolean;
-            }> => result.status === "fulfilled"
-        )
-        .filter((result) => result.value.works)
-        .map((result) => result.value.url);
+    return false;
 };
 
 /**
@@ -161,93 +111,122 @@ export const getTransaction = async (
  * @param address - The address to get the balance of.
  * @param rpcUrls - The list of RPC URLs to get the balance from.
  * @param decimals - The number of decimals to format the balance to.
- * @returns The balance of the address on the given RPC URLs.
+ * @returns The balance of the address, and active RPC URLs.
  */
 export const getETHBalance = async (
     address: Address,
     rpcUrls: string[],
-    decimals = 18
-): Promise<number> => {
+    decimals = 18,
+    urlsOnly = false
+): Promise<{ balance: number; urls: string[] }> => {
     if (rpcUrls.length === 0) {
         throw new Error("No RPC URLs provided");
     }
     if (!isAddress(address)) {
         throw new Error("Invalid address");
     }
-
-    // Try each RPC URL and get balances
-    const results = await Promise.allSettled(
-        rpcUrls.map(async (url) => {
-            const balance = await retry(async () => {
-                // A promise that rejects after the timeout
-                const timeoutPromise = new Promise<never>((_, reject) => {
-                    setTimeout(() => {
-                        reject(new Error(`Request timed out for RPC ${url}`));
-                    }, CONFIG.RPC_TEST_TIMEOUT);
-                });
-
-                // The actual fetch promise
-                const fetchPromise = fetch(url, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        jsonrpc: "2.0",
-                        method: "eth_getBalance",
-                        params: [address, "latest"],
-                        id: 1,
-                    }),
-                }).then(async (response) => {
-                    if (!response.ok) {
-                        throw new Error(
-                            `HTTP error! status: ${response.status}`
-                        );
-                    }
-
-                    const data = await response.json();
-                    if (data.error) {
-                        throw new Error(data.error.message);
-                    }
-
-                    return data.result;
-                });
-
-                // Race the fetch against the timeout
-                return Promise.race([fetchPromise, timeoutPromise]);
-            }, `Failed to get balance from RPC ${url}`);
-
-            return balance;
-        })
+    // Filter out template URLs first
+    const candidateUrls = rpcUrls.filter(
+        (url) => !url.includes("API_KEY") && !url.startsWith("wss://")
     );
-
-    // Filter successful results
-    const successfulBalances = results
-        .filter(
-            (result): result is PromiseFulfilledResult<string> =>
-                result.status === "fulfilled"
-        )
-        .map((result) => result.value);
-
-    if (successfulBalances.length === 0) {
-        throw new Error("Failed to get balance from any RPC");
+    // if no valid URLs are left, treat same as no URLs provided
+    if (candidateUrls.length === 0) {
+        throw new Error("No valid RPC URLs provided");
     }
 
-    // Find the most common balance (majority)
-    const balanceCounts = new Map<string, number>();
-    for (const balance of successfulBalances) {
-        balanceCounts.set(balance, (balanceCounts.get(balance) || 0) + 1);
-    }
-
-    let majorityBalance = successfulBalances[0];
-    let maxCount = 1;
-
-    for (const [balance, count] of balanceCounts.entries()) {
-        if (count > maxCount) {
-            majorityBalance = balance;
-            maxCount = count;
+    // return valid cached URLs if only URLs are needed
+    if (urlsOnly) {
+        const cached = candidateUrls.filter((url) => isURLInCache(url));
+        if (cached.length > 0) {
+            return { balance: 0, urls: cached };
         }
     }
 
-    return Number(formatUnits(BigInt(majorityBalance), decimals));
+    // Try each RPC URL and get balances
+    const results = await Promise.allSettled(
+        candidateUrls.map(async (url) =>
+            retry(async () => {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(
+                    () => controller.abort(),
+                    CONFIG.RPC_TEST_TIMEOUT
+                );
+                // The actual fetch promise
+                try {
+                    const response = await fetch(url, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            jsonrpc: "2.0",
+                            method: "eth_getBalance",
+                            params: [address, "latest"],
+                            id: 1,
+                        }),
+                        signal: controller.signal,
+                    });
+
+                    // send url to cache, and get result
+                    const { ok, result } = await processRPCResponse(
+                        url,
+                        response,
+                        Date.now()
+                    );
+                    if (!ok || result == null) {
+                        throw new Error(
+                            `RPC ${url} failed, ${response.status}`
+                        );
+                    }
+                    return [url, result] as [string, string];
+                } finally {
+                    clearTimeout(timeoutId);
+                }
+            }, `Failed to get balance from RPC ${url}`)
+        )
+    );
+
+    // extract successful balances and urls
+    const urlBalances: Map<string, string> = new Map();
+
+    for (const res of results) {
+        if (res.status === "fulfilled") {
+            const [url, balance] = res.value;
+            if (balance !== null && balance !== undefined) {
+                urlBalances.set(url, balance);
+            }
+        }
+    }
+
+    const urls = Array.from(urlBalances.keys());
+    if (urlsOnly) {
+        return { balance: 0, urls };
+    }
+
+    if (urlBalances.size === 0) {
+        throw new Error("Failed to get balance from any RPC");
+    }
+
+    // Find the most common balance (majority/mode)
+    const balanceCounts = new Map<string, number>();
+    let majorityBalance = "0";
+    let maxCount = 0;
+    const majorityThreshold = Math.floor(urlBalances.size / 2) + 1;
+
+    for (const balance of urlBalances.values()) {
+        const count = (balanceCounts.get(balance) ?? 0) + 1;
+        balanceCounts.set(balance, count);
+        if (count > maxCount) {
+            maxCount = count;
+            majorityBalance = balance;
+        }
+        if (count >= majorityThreshold) {
+            break;
+        }
+    }
+
+    return {
+        balance: Number(formatUnits(BigInt(majorityBalance), decimals)),
+        urls,
+    };
 };
 
 /**

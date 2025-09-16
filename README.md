@@ -17,7 +17,7 @@ FaucETH is a high-performance, community-funded faucet for Ethereum testnets. It
 - **Multi-Network Support:** Get testnet funds on 400+ test networks and counting.
 - **Progressive Network Discovery:** The UI loads instantly and validates network health in the background, so you're never left waiting.
 - **IP and wallet address Rate Limiting:** Request funds from up to 3 different networks within a 24-hour period.
-- **Anti-sybil protection** Requires a resonable number of gitcoin passport score or a minimum of 2ETH donation to protect against bots
+- **Anti-sybil protection** Requires a reasonable Gitcoin Passport score to protect against bots
 - **Community Funded:** Anyone can donate to the faucet to help other developers.
 - **Real-time Updates:** See donation leaderboard, recent transactions and faucet statistics update live.
 - **Automatically Extensible:** Add your testnet to [ethereum-lists/chains](https://github.com/ethereum-lists/chains) and see it show up in FaucETH network list instantly
@@ -45,7 +45,7 @@ Follow these steps to set up FaucETH on your local machine.
 #### 2. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/fauceth.git
+git clone https://github.com/ajayimike/fauceth.git
 cd fauceth
 ```
 

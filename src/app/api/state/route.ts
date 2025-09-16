@@ -3,7 +3,6 @@ import { error, success, validateQueryParams } from "@/lib/api/response";
 import { NetworkFaucetState } from "@/lib/api/types";
 import { calculateDailyClaimAmount } from "@/lib/faucet";
 import { getETHBalance, getNetworkInfo } from "@/lib/networks";
-import { filterWorkingRPCs } from "@/lib/networks";
 import { NextRequest } from "next/server";
 import { Address } from "viem";
 import { z } from "zod";
@@ -32,16 +31,10 @@ export async function GET(req: NextRequest) {
             return error("No RPC URLs found for network", 400);
         }
 
-        // Get working RPCs
-        const workingRPCURLs = await filterWorkingRPCs(networkDetails.rpc);
-        if (workingRPCURLs.length === 0) {
-            return error("No working RPC URLs found for network", 400);
-        }
-
         // Get faucet balance
-        const faucetBalance = await getETHBalance(
+        const { balance: faucetBalance } = await getETHBalance(
             env.FAUCET_ADDRESS as Address,
-            workingRPCURLs
+            networkDetails.rpc
         );
 
         // Calculate daily claim amount

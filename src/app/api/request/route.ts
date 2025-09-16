@@ -6,12 +6,10 @@ import {
     getOrCreateUser,
     recordRequest,
     getOrCreateIpAddress,
-    checkUserExistsAndDonations,
 } from "@/lib/db/operations";
 import { z } from "zod";
 import { Address, getAddress } from "viem";
 import {
-    filterWorkingRPCs,
     getETHBalance,
     getNetworkInfo,
     networkInfoToViemChain,
@@ -130,8 +128,6 @@ export async function POST(req: NextRequest) {
                     expectedHostname
                 );
 
-                console.log("hCaptchaResponse", hCaptchaResponse);
-
                 if (!hCaptchaResponse.success) {
                     // Log detailed information about failed captcha verification
                     console.warn("hCaptcha verification failed:", {
@@ -210,62 +206,39 @@ export async function POST(req: NextRequest) {
                     return error(message, 429);
                 }
 
-                const [userExists, totalDonations] =
-                    await checkUserExistsAndDonations(
-                        checkSummedAddress,
-                        session
+                // Fetch Passport score for all users (new or existing) - donations are no longer considered for eligibility
+                const [meetsThreshold, score] =
+                    await getPassportScore(checkSummedAddress);
+
+                if (!meetsThreshold) {
+                    return error(
+                        `Your Gitcoin Passport score (${score}) needs to be at least ${env.PASSPORT_SCORE_THRESHOLD} to use this faucet. Please visit https://app.passport.xyz to increase your score.`,
+                        403
                     );
-
-                if (userExists) {
-                    // For existing users, check if they have sufficient donations
-                    const hasSufficientDonations =
-                        totalDonations >=
-                        Number(env.MIN_DONATION_REQUIRED_FOR_VERIFICATION);
-
-                    // If they haven't donated enough, check their Passport score
-                    if (!hasSufficientDonations) {
-                        const [meetsThreshold, score] =
-                            await getPassportScore(checkSummedAddress);
-
-                        // If both verification methods fail, return error with both options
-                        if (!meetsThreshold) {
-                            return error(
-                                `Verification required: Your donations (${totalDonations} ETH) are below our threshold of ${env.MIN_DONATION_REQUIRED_FOR_VERIFICATION} ETH, and your Gitcoin Passport score (${score}) is below our required threshold of ${env.PASSPORT_SCORE_THRESHOLD}. Please either make a donation or increase your Passport score at https://app.passport.xyz to use the faucet.`,
-                                403
-                            );
-                        }
-                        // Continue if Passport score is good (even if donations aren't)
-                    }
-                    // Continue if donations are good
-                } else {
-                    // For new users, they can't have donations yet, so check only Passport score
-                    const [meetsThreshold, score] =
-                        await getPassportScore(checkSummedAddress);
-
-                    if (!meetsThreshold) {
-                        return error(
-                            `Your Gitcoin Passport score (${score}) needs to be at least ${env.PASSPORT_SCORE_THRESHOLD} to use this faucet. Please visit https://app.passport.xyz to increase your score, or consider making a small donation instead.`,
-                            403
-                        );
-                    }
-                    // Continue if Passport score is good
                 }
+                // Continue if Passport score meets the threshold
 
                 // Get network details and working RPCs
                 const networkDetails = await getNetworkInfo(networkId);
-                const workingRPCs = await filterWorkingRPCs(networkDetails.rpc);
 
-                if (workingRPCs.length === 0) {
+                const { balance: userBalance, urls } = await getETHBalance(
+                    checkSummedAddress,
+                    networkDetails.rpc
+                );
+
+                if (
+                    userBalance >= Number(env.NEXT_PUBLIC_MAX_ALLOWED_BALANCE)
+                ) {
                     return error(
-                        "Network connectivity issue. We're having trouble connecting to the blockchain right now. Please try again in a few minutes.",
-                        503
+                        `Your wallet balance (${userBalance} ETH) exceeds the maximum allowed balance of ${env.NEXT_PUBLIC_MAX_ALLOWED_BALANCE} ETH. Please withdraw some funds before requesting from the faucet.`,
+                        403
                     );
                 }
 
                 // Get faucet's ETH balance
-                const balance = await getETHBalance(
+                const { balance } = await getETHBalance(
                     env.FAUCET_ADDRESS as Address,
-                    workingRPCs
+                    urls
                 );
 
                 // Calculate claim amount
@@ -288,7 +261,7 @@ export async function POST(req: NextRequest) {
                 const txHash = await sendETH(
                     checkSummedAddress,
                     parseEther(claimAmount.toString()),
-                    workingRPCs,
+                    urls,
                     networkInfoToViemChain(networkDetails)
                 );
 
