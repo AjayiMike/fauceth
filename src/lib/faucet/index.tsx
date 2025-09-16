@@ -61,23 +61,17 @@ export const sendETH = async (
     let maxPriorityFeePerGas: bigint | undefined;
     let gasPrice: bigint | undefined;
 
+    const gasLimit = await publicClient.estimateGas({
+        to: address,
+        value: amount,
+    });
+
     try {
         ({ maxFeePerGas, maxPriorityFeePerGas } =
             await publicClient.estimateFeesPerGas({
                 type: "eip1559",
                 chain,
             }));
-        // some rpc providers don't return maxPriorityFeePerGas, so we need to calculate it
-        if (
-            maxFeePerGas &&
-            (!maxPriorityFeePerGas || maxPriorityFeePerGas === BigInt(0))
-        ) {
-            // Calculate priority fee as 30% of the original maxFeePerGas
-            maxPriorityFeePerGas =
-                (maxFeePerGas * BigInt(130)) / BigInt(100) - maxFeePerGas;
-            // Recalculate maxFeePerGas as base fee + priority fee for EIP-1559 compliance
-            maxFeePerGas = maxPriorityFeePerGas + maxFeePerGas;
-        }
     } catch (error) {
         console.error(error);
         gasPrice = await publicClient.getGasPrice();
@@ -90,7 +84,7 @@ export const sendETH = async (
         tx = await walletClient.sendTransaction({
             to: address,
             value: amount,
-            gas: BigInt(21000),
+            gas: (gasLimit * BigInt(130)) / BigInt(100), // 30% more gas
             type: chainType,
             maxFeePerGas: maxFeePerGas,
             maxPriorityFeePerGas: maxPriorityFeePerGas,
@@ -99,7 +93,7 @@ export const sendETH = async (
         tx = await walletClient.sendTransaction({
             to: address,
             value: amount,
-            gas: BigInt(21000),
+            gas: (gasLimit * BigInt(130)) / BigInt(100), // 30% more gas
             type: chainType,
             gasPrice: gasPrice,
         });
