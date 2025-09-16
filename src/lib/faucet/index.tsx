@@ -67,6 +67,17 @@ export const sendETH = async (
                 type: "eip1559",
                 chain,
             }));
+        // some rpc providers don't return maxPriorityFeePerGas, so we need to calculate it
+        if (
+            maxFeePerGas &&
+            (!maxPriorityFeePerGas || maxPriorityFeePerGas === BigInt(0))
+        ) {
+            // Calculate priority fee as 30% of the original maxFeePerGas
+            maxPriorityFeePerGas =
+                (maxFeePerGas * BigInt(130)) / BigInt(100) - maxFeePerGas;
+            // Recalculate maxFeePerGas as base fee + priority fee for EIP-1559 compliance
+            maxFeePerGas = maxPriorityFeePerGas + maxFeePerGas;
+        }
     } catch (error) {
         console.error(error);
         gasPrice = await publicClient.getGasPrice();

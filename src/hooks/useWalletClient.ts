@@ -1,5 +1,5 @@
 import { useConnection } from "@/providers/ConnectionProvider";
-import { createWalletClient, custom } from "viem";
+import { createWalletClient, custom, Hex } from "viem";
 const useWalletClient = () => {
     const { connectedProvider, account } = useConnection();
     if (!connectedProvider || !account) {
@@ -7,7 +7,7 @@ const useWalletClient = () => {
     }
 
     const walletClient = createWalletClient({
-        account: account as `0x${string}`,
+        account: account as Hex,
         transport: custom(connectedProvider.provider),
     });
 
