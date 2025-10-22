@@ -124,7 +124,7 @@ const TransactionsTable = () => {
                     <TableRow>
                         <TableCell
                             colSpan={5}
-                            className="text-center py-8 text-red-500"
+                            className="text-center py-8 text-destructive"
                         >
                             {error}
                         </TableCell>
@@ -162,8 +162,8 @@ const TransactionsTable = () => {
                             delay: index * 0.1,
                         }}
                         className={`hover:bg-${
-                            activeTab === "requests" ? "blue" : "rose"
-                        }-500/5`}
+                            activeTab === "requests" ? "primary" : "destructive"
+                        }/5`}
                     >
                         <TableCell className="font-mono">
                             {truncateAddress(tx.userId.address)}
@@ -219,7 +219,7 @@ const TransactionsTable = () => {
                     <TabsList className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
                         <TabsTrigger
                             value="requests"
-                            className="inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-blue-600 data-[state=active]:shadow hover:text-blue-600"
+                            className="inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow hover:text-primary"
                         >
                             <ArrowDownUp
                                 className="w-4 h-4 mr-2"
@@ -229,7 +229,7 @@ const TransactionsTable = () => {
                         </TabsTrigger>
                         <TabsTrigger
                             value="donations"
-                            className="inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-rose-600 data-[state=active]:shadow hover:text-rose-600"
+                            className="inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-destructive data-[state=active]:shadow hover:text-destructive"
                         >
                             <Wallet
                                 className="w-4 h-4 mr-2"

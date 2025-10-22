@@ -44,7 +44,7 @@ const FaucetInfo: FC<{
                     balance ? displayNumber(balance, 1) : "0"
                 } ${currency}`,
                 icon: Coins,
-                color: "text-green-500 bg-green-500/10",
+                color: "text-primary bg-primary/10",
             },
             {
                 title: "Drop",
@@ -52,13 +52,13 @@ const FaucetInfo: FC<{
                     faucetAmount ? displayNumber(faucetAmount, 3) : "0"
                 } ${currency}`,
                 icon: Droplet,
-                color: "text-blue-500 bg-blue-500/10",
+                color: "text-primary bg-primary/10",
             },
             {
                 title: "Interval",
                 value: formatDuration(cooldownPeriod),
                 icon: Clock,
-                color: "text-purple-500 bg-purple-500/10",
+                color: "text-muted-foreground bg-muted",
             },
         ],
         [balance, currency, faucetAmount, cooldownPeriod]

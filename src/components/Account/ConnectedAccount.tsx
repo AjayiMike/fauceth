@@ -16,7 +16,7 @@ export const ConnectedAccount = () => {
             <PopoverTrigger asChild>
                 <Button
                     variant="outline"
-                    className="bg-rose-50 hover:bg-rose-100 border-rose-200 text-rose-600 gap-2 cursor-pointer"
+                    className="bg-accent hover:bg-accent/80 border-input text-accent-foreground gap-2 cursor-pointer"
                 >
                     <Image
                         src={connectedProvider?.info.icon || ""}
@@ -44,7 +44,7 @@ export const ConnectedAccount = () => {
                     </div>
                     <Button
                         variant="outline"
-                        className="w-full border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+                        className="w-full border-input hover:bg-accent hover:text-accent-foreground"
                         onClick={handleDisconnect}
                     >
                         <LogOut className="h-4 w-4 mr-2" />

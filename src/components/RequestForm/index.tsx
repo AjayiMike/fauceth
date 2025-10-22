@@ -96,12 +96,12 @@ const RequestForm = ({
             balance === undefined
         ) {
             return (
-                <Alert className="bg-blue-500/10 text-blue-600 border-blue-200">
+                <Alert className="bg-primary/10 text-primary">
                     <Loader2
                         className="h-5 w-5 mt-0.5 animate-spin"
                         aria-hidden="true"
                     />
-                    <AlertDescription className="text-blue-600/80">
+                    <AlertDescription className="text-primary/80">
                         Loading faucet information...
                     </AlertDescription>
                 </Alert>
@@ -110,12 +110,12 @@ const RequestForm = ({
 
         if (isZeroBalance) {
             return (
-                <Alert className="bg-blue-500/10 text-blue-600 border-blue-200">
+                <Alert className="bg-primary/10 text-primary">
                     <AlertCircle
                         className="h-5 w-5 mt-0.5"
                         aria-hidden="true"
                     />
-                    <AlertDescription className="text-blue-600/80">
+                    <AlertDescription className="text-primary/80">
                         The {network?.name || "current network"} faucet is
                         currently empty. Please check back later or consider
                         donating to help keep the faucet running.
@@ -126,12 +126,12 @@ const RequestForm = ({
 
         if (isLowBalance) {
             return (
-                <Alert className="bg-blue-500/10 text-blue-600 border-blue-200">
+                <Alert className="bg-primary/10 text-primary">
                     <AlertTriangle
                         className="h-5 w-5 mt-0.5"
                         aria-hidden="true"
                     />
-                    <AlertDescription className="text-blue-600/80">
+                    <AlertDescription className="text-primary/80">
                         The faucet is very low on this network, therefore cannot
                         dispense at the moment. consider donating to help keep
                         it running.
@@ -142,7 +142,7 @@ const RequestForm = ({
 
         if (isWarningBalance) {
             return (
-                <Alert className="bg-blue-500/10 text-blue-600 border-blue-200">
+                <Alert className="bg-blue-500/10 text-blue-600">
                     <AlertTriangle
                         className="h-5 w-5 mt-0.5"
                         aria-hidden="true"
@@ -168,9 +168,9 @@ const RequestForm = ({
         }
 
         return (
-            <Alert className="bg-blue-500/10 text-blue-600 border-blue-200">
+            <Alert className="bg-primary/10 text-primary">
                 <Info className="h-5 w-5 mt-0.5" aria-hidden="true" />
-                <AlertDescription className="text-blue-600/80">
+                <AlertDescription className="text-primary/80">
                     You can request {displayNumber(faucetAmount || 0, 3)}{" "}
                     {currency ?? "ETH"} every{" "}
                     {formatDuration(cooldownPeriod || 0)}. Make sure to provide
@@ -295,7 +295,7 @@ const RequestForm = ({
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <div className="flex items-center space-x-2">
-                        <Droplet className="w-5 h-5 text-blue-500" />
+                        <Droplet className="w-5 h-5 text-primary" />
                         <h3 className="font-semibold text-lg">
                             Request Testnet {currency ?? "ETH"}
                         </h3>
@@ -305,12 +305,12 @@ const RequestForm = ({
                     <div className="space-y-6">
                         {renderAlert()}
 
-                        <Alert className="bg-blue-500/10 text-blue-600 border-blue-200">
+                        <Alert className="bg-primary/10 text-primary">
                             <Info
                                 className="h-5 w-5 mt-0.5"
                                 aria-hidden="true"
                             />
-                            <AlertDescription className="text-blue-600/80">
+                            <AlertDescription className="text-primary/80">
                                 To request funds, you need a Gitcoin Passport
                                 score of at least {env.PASSPORT_SCORE_THRESHOLD}
                                 .
@@ -384,7 +384,7 @@ const RequestForm = ({
                             )}
 
                             <Button
-                                className="w-full h-12 text-base font-medium bg-blue-500 hover:bg-blue-600"
+                                className="w-full h-12 text-base font-medium"
                                 size="lg"
                                 disabled={
                                     isLowBalance ||
@@ -425,31 +425,31 @@ const RequestForm = ({
                 open={!!successData}
                 onOpenChange={(open) => !open && setSuccessData(null)}
             >
-                <DialogContent className="sm:max-w-md border-blue-200 bg-gradient-to-b from-white to-blue-50 bg-background">
+                <DialogContent className="sm:max-w-md bg-background">
                     <DialogHeader className="pb-2">
-                        <DialogTitle className="text-xl text-blue-700 font-semibold">
+                        <DialogTitle className="text-xl text-foreground font-semibold">
                             Test {currency ?? "ETH"} Request Successful!
                         </DialogTitle>
-                        <DialogDescription className="text-gray-600">
+                        <DialogDescription className="text-muted-foreground">
                             Your requested testnet {currency ?? "ETH"} has been
                             processed successfully.
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-6 py-4 overflow-hidden">
-                        <div className="bg-background rounded-lg p-4 border border-blue-100 shadow-sm">
-                            <p className="text-sm font-medium text-gray-500 mb-2">
+                        <div className="bg-background rounded-lg p-4 border shadow-sm">
+                            <p className="text-sm font-medium text-muted-foreground mb-2">
                                 Amount Sent:
                             </p>
-                            <p className="text-2xl font-bold text-blue-600">
+                            <p className="text-2xl font-bold text-primary">
                                 {successData?.amount &&
                                     displayNumber(successData.amount, 5)}{" "}
                                 {currency ?? "ETH"}
                             </p>
                         </div>
 
-                        <div className="bg-background rounded-lg p-4 border border-blue-100 shadow-sm">
-                            <p className="text-sm font-medium text-gray-500 mb-2">
+                        <div className="bg-background rounded-lg p-4 border shadow-sm">
+                            <p className="text-sm font-medium text-muted-foreground mb-2">
                                 Transaction Hash:
                             </p>
                             <div className="relative bg-background rounded p-0 mt-1 flex">
@@ -463,11 +463,11 @@ const RequestForm = ({
                                         successData?.txHash &&
                                         copyToClipboard(successData.txHash)
                                     }
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-600 transition-colors cursor-pointer"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
                                     aria-label="Copy transaction hash"
                                 >
                                     {isCopied ? (
-                                        <Check className="h-4 w-4 text-green-500" />
+                                        <Check className="h-4 w-4 text-primary" />
                                     ) : (
                                         <Copy className="h-4 w-4" />
                                     )}
@@ -480,16 +480,16 @@ const RequestForm = ({
                                 href={`${explorer.url}/tx/${successData?.txHash}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex justify-center items-center  bg-blue-50 hover:bg-blue-100  text-blue-700 font-medium py-3 px-4 rounded-lg transition-colors w-full"
+                                className="flex justify-center items-center bg-accent hover:bg-accent/80 text-accent-foreground font-medium py-3 px-4 rounded-lg transition-colors w-full"
                             >
                                 View on {explorer.name}
                                 <ExternalLink className="ml-2 h-4 w-4" />
                             </a>
                         )}
 
-                        <div className="pt-4 mt-4 border-t border-blue-100">
+                        <div className="pt-4 mt-4 border-t">
                             <div className="space-y-4 text-center">
-                                <p className="text-sm font-medium text-gray-600">
+                                <p className="text-sm font-medium text-muted-foreground">
                                     Do you like this faucet? Give it a star on
                                     GitHub!
                                 </p>
@@ -502,7 +502,7 @@ const RequestForm = ({
                                     />
                                 </div>
 
-                                <p className="text-sm font-medium text-gray-600">
+                                <p className="text-sm font-medium text-muted-foreground">
                                     Share the news with others on X!
                                 </p>
                                 <Button
