@@ -109,7 +109,7 @@ const Leaderboard = () => {
                                     key={donor.address}
                                     className={`flex lg:flex-col lg:items-start items-center justify-between p-4 rounded-lg transition-colors border ${
                                         isTop
-                                            ? "bg-yellow-50 border-yellow-200 shadow-sm"
+                                            ? "bg-accent border-primary/20 shadow-sm"
                                             : "bg-card hover:bg-accent/50"
                                     }`}
                                 >
@@ -119,7 +119,7 @@ const Leaderboard = () => {
                                             {isTop && (
                                                 <span className="absolute -top-3 -right-3 w-7 h-7 flex items-center justify-center rounded-full bg-background shadow">
                                                     <Crown
-                                                        className="w-5 h-5 text-yellow-500"
+                                                        className="w-5 h-5 text-primary"
                                                         aria-label="Top Donor"
                                                     />
                                                 </span>
@@ -130,7 +130,7 @@ const Leaderboard = () => {
                                                 <span
                                                     className={`text-lg font-bold ${
                                                         isTop
-                                                            ? "text-yellow-700"
+                                                            ? "text-primary"
                                                             : "text-muted-foreground"
                                                     }`}
                                                 >
