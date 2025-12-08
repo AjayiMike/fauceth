@@ -17,10 +17,10 @@ export const getStatusIcon = ({ health, faucetState }: GetStatusIconProps) => {
         return <InactiveIcon className="text-destructive/50" />;
     }
     if (health === "pending" || faucetState === "loading") {
-        return <PendingIcon className="text-gray-600" />;
+        return <PendingIcon className="text-muted-foreground" />;
     }
     // Network is 'online' and faucet is 'ok', 'low', or 'empty'
-    return <ActiveIcon className="text-green-600" />;
+    return <ActiveIcon className="text-primary" />;
 };
 
 const getStatusTooltip = ({

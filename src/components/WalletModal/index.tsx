@@ -47,7 +47,7 @@ const WalletModal = () => {
                     <DialogTrigger asChild>
                         <Button
                             variant="outline"
-                            className="bg-rose-50 hover:bg-rose-100 border-rose-200 text-rose-600"
+                            className="bg-accent hover:bg-accent/80 border-input text-accent-foreground"
                         >
                             <Wallet className="w-4 h-4 mr-2 hidden sm:block" />
                             <span>Connect Wallet</span>
@@ -65,7 +65,7 @@ const WalletModal = () => {
                                 <Button
                                     key={provider.info.uuid}
                                     variant="outline"
-                                    className="w-full justify-start gap-3 h-12 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200"
+                                    className="w-full justify-start gap-3 h-12 hover:bg-accent hover:text-accent-foreground hover:border-input"
                                     onClick={() => connectWallet(provider)}
                                 >
                                     <img
@@ -84,7 +84,7 @@ const WalletModal = () => {
                                 INITIAL_DISPLAY_COUNT && (
                                 <Button
                                     variant="ghost"
-                                    className="w-full hover:bg-rose-50 hover:text-rose-600"
+                                    className="w-full hover:bg-accent hover:text-accent-foreground"
                                     onClick={() => setShowAll(!showAll)}
                                 >
                                     {showAll ? (

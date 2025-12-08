@@ -1,9 +1,9 @@
 const Footer = () => {
     return (
-        <footer className="bg-background shadow-sm py-4 mt-auto">
+        <footer className="mt-auto py-4 backdrop-blur supports-[backdrop-filter]:bg-background/70 bg-background/90 border-t border-border/60">
             <div className="container mx-auto px-4">
                 <div className="flex justify-between items-center">
-                    <span className="text-xs md:text-sm text-gray-500">
+                    <span className="text-xs md:text-sm text-muted-foreground">
                         © {new Date().getFullYear()} Fauceth | By the
                         community, for the community
                     </span>

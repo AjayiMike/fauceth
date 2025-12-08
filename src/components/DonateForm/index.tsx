@@ -406,10 +406,7 @@ const DonateForm = () => {
                             >
                                 Cancel
                             </Button>
-                            <Button
-                                className="bg-rose-500 hover:bg-rose-600"
-                                onClick={handleConfirmDonate}
-                            >
+                            <Button className="" onClick={handleConfirmDonate}>
                                 Confirm Donation
                             </Button>
                         </DialogFooter>
@@ -428,7 +425,7 @@ const DonateForm = () => {
                             </DialogDescription>
                         </DialogHeader>
                         <div className="py-8 flex flex-col items-center justify-center space-y-4">
-                            <Loader2 className="h-8 w-8 animate-spin text-rose-500" />
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
                             <div className="text-center">
                                 <p className="font-medium mb-2">
                                     {txStatus === "mining" &&
@@ -449,34 +446,34 @@ const DonateForm = () => {
                                     <div
                                         className={`h-2.5 w-2.5 rounded-full ${
                                             txStatus !== "initiating"
-                                                ? "bg-rose-500"
-                                                : "bg-gray-300"
+                                                ? "bg-primary"
+                                                : "bg-muted"
                                         }`}
                                     ></div>
                                     <div
                                         className={`h-2.5 w-2.5 rounded-full ${
                                             txStatus !== "initiating" &&
                                             txStatus !== "signing"
-                                                ? "bg-rose-500"
-                                                : "bg-gray-300"
+                                                ? "bg-primary"
+                                                : "bg-muted"
                                         }`}
                                     ></div>
                                     <div
                                         className={`h-2.5 w-2.5 rounded-full ${
                                             txStatus === "verifying" ||
                                             txStatus === "complete"
-                                                ? "bg-rose-500"
-                                                : "bg-gray-300"
+                                                ? "bg-primary"
+                                                : "bg-muted"
                                         }`}
                                     ></div>
                                     <div
                                         className={`h-2.5 w-2.5 rounded-full ${
                                             txStatus === "complete"
-                                                ? "bg-rose-500"
-                                                : "bg-gray-300"
+                                                ? "bg-primary"
+                                                : "bg-muted"
                                         }`}
                                     ></div>
-                                    <div className="absolute left-0 top-1/2 h-0.5 bg-gradient-to-r from-rose-500 to-gray-300 w-full -z-10 transform -translate-y-1/2"></div>
+                                    <div className="absolute left-0 top-1/2 h-0.5 bg-gradient-to-r from-primary to-muted w-full -z-10 transform -translate-y-1/2"></div>
                                 </div>
                                 <div className="flex justify-between text-xs text-muted-foreground mt-2">
                                     <span>Sign</span>
@@ -602,7 +599,7 @@ const DonateForm = () => {
                                 Skip
                             </Button>
                             <Button
-                                className="bg-rose-500 hover:bg-rose-600"
+                                className=""
                                 onClick={handleSocialLinksSubmit}
                                 disabled={hasSocialErrors}
                             >
@@ -621,9 +618,9 @@ const DonateForm = () => {
                             </DialogDescription>
                         </DialogHeader>
                         <div className="py-6 flex flex-col items-center justify-center space-y-4">
-                            <div className="h-12 w-12 rounded-full bg-rose-100 flex items-center justify-center">
+                            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                                 <CheckCircle2
-                                    className="h-6 w-6 text-rose-500"
+                                    className="h-6 w-6 text-primary"
                                     aria-hidden="true"
                                 />
                             </div>
@@ -639,7 +636,7 @@ const DonateForm = () => {
                         </div>
                         <DialogFooter>
                             <Button
-                                className="w-full bg-rose-500 hover:bg-rose-600"
+                                className="w-full"
                                 onClick={handleModalClose}
                             >
                                 Close
@@ -819,12 +816,12 @@ const DonateForm = () => {
                                         </AlertDescription>
                                     </Alert>
                                 ) : (
-                                    <Alert className="bg-rose-500/10 text-rose-600 border-rose-200">
+                                    <Alert className="bg-primary/10 text-primary border-primary/20">
                                         <Info className="h-5 w-5 mt-0.5" />
                                         <AlertTitle>
                                             {`Support the Faucet on ${currentNetwork?.name}`}
                                         </AlertTitle>
-                                        <AlertDescription className="text-rose-600/80">
+                                        <AlertDescription className="text-primary/80">
                                             Your donations help keep this faucet
                                             running. Any amount of{" "}
                                             {
@@ -839,7 +836,7 @@ const DonateForm = () => {
 
                             {isUnsupportedChain ? (
                                 <Button
-                                    className="w-full h-12 text-base font-medium bg-rose-500 hover:bg-rose-600"
+                                    className="w-full h-12 text-base font-medium"
                                     size="lg"
                                     onClick={() =>
                                         handleSwitchChain(
@@ -851,7 +848,7 @@ const DonateForm = () => {
                                 </Button>
                             ) : (
                                 <Button
-                                    className="w-full h-12 text-base font-medium bg-rose-500 hover:bg-rose-600"
+                                    className="w-full h-12 text-base font-medium"
                                     size="lg"
                                     disabled={Boolean(
                                         isError ||
