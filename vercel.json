@@ -1,0 +1,8 @@
+{
+    "crons": [
+        {
+            "path": "/api/cron/fundingvault-claim",
+            "schedule": "0 0 * * *"
+        }
+    ]
+}

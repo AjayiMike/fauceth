@@ -92,4 +92,17 @@ export const env = {
         false, //set required to false since there's a default value
         "2"
     ),
+    FUNDING_VAULT_CONTRACT_ADDRESS: getEnvValue(
+        "FUNDING_VAULT_CONTRACT_ADDRESS",
+        process.env.FUNDING_VAULT_CONTRACT_ADDRESS,
+        false,
+        "0x610866c6089768dA95524bcc4cE7dB61eDa3931c"
+    ),
+    FUNDING_VAULT_MIN_BALANCE_THRESHOLD: getEnvValue(
+        "FUNDING_VAULT_MIN_BALANCE_THRESHOLD",
+        process.env.FUNDING_VAULT_MIN_BALANCE_THRESHOLD,
+        false,
+        "2000"
+    ),
+    CRON_SECRET: getEnvValue("CRON_SECRET", process.env.CRON_SECRET, false),
 };
