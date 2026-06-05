@@ -7,17 +7,36 @@ import {
     shouldTriggerFundingClaim,
 } from "@/lib/fundingvault";
 
-const verifyCronAuthorization = (req: NextRequest) => {
-    if (!env.CRON_SECRET) return true;
+type CronAuthResult =
+    | { ok: true }
+    | { ok: false; status: number; message: string };
+
+const verifyCronAuthorization = (req: NextRequest): CronAuthResult => {
+    if (!env.CRON_SECRET) {
+        return {
+            ok: false,
+            status: 500,
+            message: "CRON_SECRET is not configured.",
+        };
+    }
 
     const authHeader = req.headers.get("authorization");
-    return authHeader === `Bearer ${env.CRON_SECRET}`;
+    if (authHeader !== `Bearer ${env.CRON_SECRET}`) {
+        return {
+            ok: false,
+            status: 401,
+            message: "Unauthorized cron request.",
+        };
+    }
+
+    return { ok: true };
 };
 
 export async function GET(req: NextRequest) {
     try {
-        if (!verifyCronAuthorization(req)) {
-            return error("Unauthorized cron request.", 401);
+        const authResult = verifyCronAuthorization(req);
+        if (!authResult.ok) {
+            return error(authResult.message, authResult.status);
         }
 
         const threshold = Number(env.FUNDING_VAULT_MIN_BALANCE_THRESHOLD);
@@ -33,8 +52,32 @@ export async function GET(req: NextRequest) {
             return error("Could not resolve Sepolia/Hoodi networks.", 500);
         }
 
-        const results = await Promise.all(
-            networks.map(async (network) => {
+        const networkResolutionResults = networks
+            .filter((networkResult) => !networkResult.network)
+            .map((networkResult) => {
+                const failedResult = {
+                    network: networkResult.key,
+                    chainId: networkResult.chainId,
+                    claimed: false,
+                    error: networkResult.error || "Failed to resolve network",
+                };
+                console.error(
+                    "[fundingvault-claim] network-resolution-failed",
+                    failedResult
+                );
+                return failedResult;
+            });
+
+        const resolvedNetworks = networks.filter(
+            (
+                networkResult
+            ): networkResult is (typeof networks)[number] & {
+                network: NonNullable<(typeof networks)[number]["network"]>;
+            } => networkResult.network !== null
+        );
+
+        const claimResults = await Promise.all(
+            resolvedNetworks.map(async ({ network }) => {
                 try {
                     const { balance, shouldClaim, urls } =
                         await shouldTriggerFundingClaim(network, threshold);
@@ -84,6 +127,8 @@ export async function GET(req: NextRequest) {
                 }
             })
         );
+
+        const results = [...networkResolutionResults, ...claimResults];
 
         return success({
             runAt: new Date().toISOString(),

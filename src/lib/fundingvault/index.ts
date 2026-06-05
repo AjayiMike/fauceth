@@ -23,11 +23,49 @@ export const FUNDING_VAULT_CHAIN_IDS = {
     hoodi: 560048,
 } as const;
 
-export const getFundingVaultNetworks = async (): Promise<INetwork[]> => {
-    return Promise.all([
-        getNetworkInfo(FUNDING_VAULT_CHAIN_IDS.sepolia),
-        getNetworkInfo(FUNDING_VAULT_CHAIN_IDS.hoodi),
-    ]);
+type FundingVaultNetworkTarget = {
+    key: keyof typeof FUNDING_VAULT_CHAIN_IDS;
+    chainId: number;
+};
+
+export type FundingVaultResolvedNetwork = {
+    key: FundingVaultNetworkTarget["key"];
+    chainId: number;
+    network: INetwork | null;
+    error?: string;
+};
+
+const FUNDING_VAULT_NETWORK_TARGETS: FundingVaultNetworkTarget[] = [
+    { key: "sepolia", chainId: FUNDING_VAULT_CHAIN_IDS.sepolia },
+    { key: "hoodi", chainId: FUNDING_VAULT_CHAIN_IDS.hoodi },
+];
+
+export const getFundingVaultNetworks = async (): Promise<
+    FundingVaultResolvedNetwork[]
+> => {
+    const resolutions = await Promise.allSettled(
+        FUNDING_VAULT_NETWORK_TARGETS.map(async (target) => ({
+            ...target,
+            network: await getNetworkInfo(target.chainId),
+        }))
+    );
+
+    return resolutions.map((result, index) => {
+        const target = FUNDING_VAULT_NETWORK_TARGETS[index];
+        if (result.status === "fulfilled") {
+            return result.value;
+        }
+
+        return {
+            key: target.key,
+            chainId: target.chainId,
+            network: null,
+            error:
+                result.reason instanceof Error
+                    ? result.reason.message
+                    : "Unknown network resolution error",
+        };
+    });
 };
 
 export const shouldTriggerFundingClaim = async (
